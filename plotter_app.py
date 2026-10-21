@@ -54,7 +54,7 @@ def create_plotter_app(manager=None, port=8767):
 
     @app.get('/api/identity')
     def identity():
-        return jsonify(service='handwriting-studio-plotter', version=6, durable_recovery=True, colour_changes=True, pen_inventory=True, colour_themes=True, theme_changes=True)
+        return jsonify(service='handwriting-studio-plotter', version=7, parked_pause=True, durable_recovery=True, colour_changes=True, pen_inventory=True, colour_themes=True, theme_changes=True)
 
     @app.get('/api/status')
     def status():

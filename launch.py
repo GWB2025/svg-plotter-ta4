@@ -31,7 +31,7 @@ class Launcher:
             raise RuntimeError(f'Could not check the local window: {exc}') from exc
         if data.get('service') != 'handwriting-studio-plotter':
             raise RuntimeError('Port 8769 is used by another app.')
-        if not data.get('durable_recovery'):
+        if not data.get('parked_pause'):
             raise RuntimeError(
                 'An older SVG Plotter sender is still running. Stop it in its '
                 'Terminal window with Control-C, then open this launcher again. '

@@ -219,7 +219,7 @@ class PlotTests(unittest.TestCase):
         self.plot.action('continue', {})
         self.plot.thread.join(5)
         self.assertEqual(self.plot.snapshot()['phase'],'completed')
-        self.assertIn('~',self.machine.commands)
+        self.assertIn('G90 G1 X0 Y0 F2400',self.machine.commands)
 
     def test_cancel_clears_queue_and_never_sends_further_xy(self):
         text = FILE.replace('G90 G1 X30 Y-30 F900', '\n'.join(f'G90 G1 X{30+i/10} Y-30 F900' for i in range(100)))

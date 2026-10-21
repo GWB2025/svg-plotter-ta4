@@ -16,3 +16,14 @@ test('selected black size is retained in exported pen marker',()=>{
  assert.ok(g.includes('; PEN_CHANGE #000000 black-003\n'));
  assert.throws(()=>makeColourGcode([[[20,20],[30,30]]],['#000000'],{'#000000':'bad\nG1'}));
 });
+
+test('all added pen families have distinct labels and stable references', () => {
+ const pens=require('../assets/pens.json');
+ const {label}=require('../assets/pens.js');
+ assert.equal(pens.length,29);
+ assert.equal(pens.filter(p=>p.brand==='Stabilo Point 88 fine').length,7);
+ assert.equal(pens.filter(p=>p.brand==='Uni-ball Eye UB-157E').length,3);
+ const yellow=pens.find(p=>p.id==='stabilo-point88-yellow');
+ assert.match(label(yellow),/Stabilo.*Yellow.*0.4 mm.*88\/44/);
+ assert.match(label(pens.find(p=>p.id==='uniball-eye-black')),/Uni-ball.*315156/);
+});

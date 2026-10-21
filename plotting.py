@@ -17,7 +17,7 @@ from pens import PenCollection
 PENS = PenCollection()
 
 MAX_BYTES = 32 * 1024 * 1024
-ACTIVE = {'connecting', 'homing', 'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'cancelling', 'pen_change'}
+ACTIVE = {'connecting', 'homing', 'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'cancelling', 'pen_change', 'resuming'}
 MOVE = re.compile(r'G90 G1 (Z(0\.5|5)|X(-?\d+(?:\.\d+)?) Y(-?\d+(?:\.\d+)?)) F(900|1200|2400|3000)')
 
 
@@ -167,6 +167,7 @@ class Plotter:
         self.job = None
         self.job_text = None
         self.recovery_active = False
+        self.pause_return = None
         self.confirmed_pens = set()
         self.identity = None
         self.rx = b''
@@ -194,8 +195,10 @@ class Plotter:
             result = copy.deepcopy(self.data)
             result['recovery_available'] = bool(
                 self.recovery_active and not self.reset_seen
-                and not self.uncertain_write and self.accepted >= 1
+                and not self.uncertain_write and self.pause_return is None
+                and self.accepted >= 1
             )
+            result['pause_return'] = copy.deepcopy(self.pause_return)
             result['saved_plot'] = self.recovery_active
             passes = [p for p in (self.job or {}).get('pen_changes', [])
                       if p['command'] in self.confirmed_pens]
@@ -258,6 +261,7 @@ class Plotter:
             accepted=self.accepted, pending=self.pending,
             uncertain_write=self.uncertain_write, reset_seen=self.reset_seen,
             confirmed_pens=sorted(self.confirmed_pens),
+            pause_return=self.pause_return,
             job_id=self.job['id'] if self.job else None,
         )
         self.atomic_json(self.folder / 'plotter-state.json', state)
@@ -290,6 +294,7 @@ class Plotter:
             self.uncertain_write = saved['uncertain_write']
             self.reset_seen = saved['reset_seen']
             self.confirmed_pens = set(saved['confirmed_pens'])
+            self.pause_return = saved.get('pause_return')
             self.recovery_active = True
             self._saved_job_id = job['id']
             self.data.update(
@@ -299,10 +304,10 @@ class Plotter:
                 message='Saved interrupted plot restored. Do not Home or move '
                         'the paper. Review the recovery confirmation to resume.',
             )
-            if self.uncertain_write or self.reset_seen:
+            if self.uncertain_write or self.reset_seen or self.pause_return is not None:
                 self.data['message'] = ('Saved plot retained, but automatic resume '
                                         'is blocked: a partial command or controller '
-                                        'reset makes progress uncertain.')
+                                        'reset or interrupted parking move makes progress uncertain.')
         except (OSError, ValueError, KeyError, TypeError):
             self.data['message'] = ('Saved plot could not be verified. It will not '
                                     'be resumed. Keep the checkpoint files for inspection.')
@@ -408,6 +413,7 @@ class Plotter:
         if controls: self.controls()
         target = self.acks+1
         if job_command:
+            self.pending = self.accepted + 1
             self.uncertain_write = True
             self.save_journal()
         self.write((command+'\r').encode('ascii'))
@@ -418,8 +424,11 @@ class Plotter:
         lines = []
         while self.acks < target:
             before = time.monotonic()
-            if controls: self.controls()
-            end += time.monotonic()-before  # A deliberate pause does not expire an acknowledgement.
+            if controls and self.cancel.is_set():
+                raise Cancelled()
+            # Finish this acknowledgement before issuing parking commands.
+            # Otherwise a parking acknowledgement could be mistaken for this one.
+            end += time.monotonic()-before
             line = self.read_line()
             if line: lines.append(line)
             if time.monotonic() > end: raise LinkError('The plotter did not acknowledge a command.')
@@ -469,21 +478,52 @@ class Plotter:
         self.reset_seen = False
         self.update('ready', 'Connected. Use Home before starting a drawing.', homed=False)
 
+    def pause_move(self, command):
+        """Complete one auxiliary move without recursively handling Pause."""
+        if self.cancel.is_set():
+            raise Cancelled()
+        self.normal(command, controls=False)
+        return self.wait_idle(controls=False, abort=True)
+
     def controls(self):
-        if self.cancel.is_set(): raise Cancelled()
-        if not self.pause.is_set(): return
-        self.write(b'!')
-        self.update('pausing', 'Pausing movement…')
+        if self.cancel.is_set():
+            raise Cancelled()
+        if not self.pause.is_set():
+            return
+        self.update('pausing', 'Finishing queued movement before parking…')
+        state = self.wait_idle(controls=False, abort=True)
+        if (state['offset'] is None or any(abs(v) > .01 for v in state['offset'])
+                or not (0 <= state['position'][0] <= 210
+                        and -297 <= state['position'][1] <= 0)
+                or min(abs(state['position'][2] - z) for z in (.5, 5)) > .02):
+            raise ValueError('Cannot verify the drawing position before parking.')
+        self.check_modes(controls=False)
+        self.pause_return = list(state['position'])
+        # No job command remains unacknowledged or queued at this boundary.
+        self.pending = self.accepted
+        self.save_journal()
+        self.pause_move('G90 G1 Z0.5 F1200')
+        self.check_home(self.pause_move('G90 G1 X0 Y0 F2400'))
+        self.update('paused', 'Paused at the top-left with the pen raised. '
+                    'Keep the paper and pen unchanged; Continue returns to the drawing.')
         while self.pause.is_set():
-            if self.cancel.is_set(): raise Cancelled()
-            state = self.status()['state']
-            if state in ('Hold:0', 'Idle') and self.data['phase'] != 'paused':
-                self.update('paused', 'Paused. Continue resumes this job; Cancel ends it.')
-            elif state == 'Alarm': raise ValueError('Controller alarm while pausing.')
+            if self.cancel.is_set():
+                raise Cancelled()
+            self.check_home(self.status())
             time.sleep(.1)
-        if self.cancel.is_set(): raise Cancelled()
-        if self.controller['state'].startswith('Hold'): self.write(b'~')
-        self.update('plotting', 'Continuing the current drawing.')
+        if self.cancel.is_set():
+            raise Cancelled()
+        self.check_home(self.status())
+        self.check_modes(controls=False)
+        self.update('resuming', 'Returning to the saved drawing position with the pen raised…')
+        x, y, z = self.pause_return
+        self.pause_move(f'G90 G1 X{x:.4f} Y{y:.4f} F2400')
+        target_z = 5 if abs(z - 5) < .02 else .5
+        state = self.pause_move(f'G90 G1 Z{target_z:g} F1200')
+        if any(abs(a - b) > .02 for a, b in zip(state['position'], self.pause_return)):
+            raise ValueError('Could not verify the saved drawing position.')
+        self.pause_return = None
+        self.update('plotting', 'Drawing position restored. Continuing the current drawing.')
 
     def home(self):
         if not self.s: raise ValueError('Connect the plotter first.')
@@ -508,8 +548,8 @@ class Plotter:
         if state['state'] != 'Idle' or state['offset'] is None or any(abs(v) > .01 for v in state['position'][:2]+tuple(state['offset'])) or abs(state['position'][2]-.5) > .02:
             raise ValueError('Expected home X0 Y0, pen raised and zero work offset.')
 
-    def check_modes(self):
-        modal = self.normal('$G')
+    def check_modes(self, controls=True):
+        modal = self.normal('$G', controls=controls)
         modes = set(re.findall(r'\bG\d+(?:\.\d+)?\b', modal))
         if not {'G21', 'G90', 'G94', 'G54'} <= modes:
             raise ValueError('Expected millimetres, absolute coordinates, G54 and feed per minute. Controller modes changed.')
@@ -632,7 +672,8 @@ class Plotter:
                 self.open_device(recovery=True)
                 if self.reset_seen: raise ValueError('The controller reset and lost its drawing position.')
                 if self.uncertain_write: raise ValueError('A command may have been partially transmitted.')
-                if self.pause.is_set(): raise ValueError('Connection was lost while paused; progress cannot be verified.')
+                if self.pause.is_set() or self.pause_return is not None:
+                    raise ValueError('Connection was lost during parking or a paused plot; progress cannot be verified.')
                 status = self.wait_idle(timeout=90, controls=False, abort=True)
                 if any(abs(v) > .01 for v in status['offset']): raise ValueError('The work offset changed.')
                 self.check_modes()
@@ -666,6 +707,7 @@ class Plotter:
         if self.started: self.data['elapsed'] = round(time.monotonic()-self.started)
         self.started = None
         self.recovery_active = False
+        self.pause_return = None
         self.update('cancelled', 'Drawing cancelled. Check the pen and use Home before a new run.', homed=False, pending_pen=None)
 
     def action(self, name, payload):
@@ -682,7 +724,7 @@ class Plotter:
             if phase == 'pen_change' and name == 'pause':
                 raise ValueError('The plotter is already waiting for a pen.')
             if name in ('pause', 'continue', 'cancel'):
-                if phase not in {'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'pen_change'}:
+                if phase not in {'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'pen_change', 'resuming'}:
                     raise ValueError('There is no active drawing to control.')
                 if name == 'pause': self.pause.set()
                 elif name == 'continue':
@@ -701,6 +743,7 @@ class Plotter:
                 if self.thread and self.thread.is_alive():
                     raise ValueError('Finish the current operation first.')
                 self.recovery_active = False
+                self.pause_return = None
                 self.close()
                 self.update('offline', 'Saved recovery discarded. Check the plotter '
                             'and Home before starting a new drawing.', pending_pen=None)

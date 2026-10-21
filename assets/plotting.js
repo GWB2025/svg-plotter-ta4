@@ -1,11 +1,11 @@
 'use strict';
 (function(root){
- const active=new Set(['connecting','homing','plotting','pausing','paused','reconnecting','finishing','cancelling','pen_change']);
+ const active=new Set(['connecting','homing','plotting','pausing','paused','reconnecting','finishing','cancelling','pen_change','resuming']);
  function permissions(s,hasJob,ready){const idle=s.connected&&!s.busy&&!active.has(s.phase);return {
   file:!s.busy&&!s.saved_plot,refresh:!s.busy,connect:!s.connected&&!s.busy&&!s.saved_plot,disconnect:idle,home:idle&&!s.saved_plot,
   resume:!!s.recovery_available&&!s.connected&&!s.busy&&hasJob&&ready,discard:!!s.saved_plot&&!s.busy,
   start:idle&&s.homed&&hasJob&&ready&&!s.saved_plot,pause:s.phase==='plotting'||s.phase==='finishing',
-  continue:s.phase==='paused'||(s.phase==='pen_change'&&ready),cancel:['plotting','pausing','paused','reconnecting','finishing','pen_change'].includes(s.phase)
+  continue:s.phase==='paused'||(s.phase==='pen_change'&&ready),cancel:['plotting','pausing','paused','reconnecting','finishing','pen_change','resuming'].includes(s.phase)
  };}
  const duration=seconds=>seconds==null?'—':seconds<60?Math.ceil(seconds)+' sec':Math.ceil(seconds/60)+' min';
  const api={permissions,duration};if(typeof module!=='undefined'&&module.exports)module.exports=api;

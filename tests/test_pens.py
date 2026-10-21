@@ -9,7 +9,7 @@ from test_colour_plotting import COLOURS, ColourTests
 class PenTests(unittest.TestCase):
     def test_inventory_and_duplicate_reference_are_preserved(self):
         pens = PenCollection()
-        self.assertEqual(len(pens.items), 19)
+        self.assertEqual(len(pens.items), 29)
         self.assertEqual(pens.label('black-003'),
                          'Pigma Micron Black 003 — 85511 30724')
         self.assertEqual(pens.get('purple-05-30644')['reference'], '85511 30644')
@@ -23,6 +23,12 @@ class PenTests(unittest.TestCase):
     def test_unknown_pen_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'Unknown pen'):
             parse_job(COLOURS.replace('#ff0000', '#ff0000 missing-pen'))
+
+    def test_other_brands_survive_export_and_reload(self):
+        for pen_id in ('stabilo-point88-yellow', 'uniball-eye-black'):
+            job = parse_job(COLOURS.replace('#ff0000', '#ff0000 ' + pen_id))
+            self.assertEqual(job['pen_changes'][0]['pen_id'], pen_id)
+            self.assertNotIn('Pigma', job['pen_changes'][0]['pen_label'])
 
     def test_legacy_files_still_load(self):
         self.assertEqual(parse_job(COLOURS)['pen_changes'][0]['colour'], '#ff0000')

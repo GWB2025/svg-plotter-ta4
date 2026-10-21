@@ -98,3 +98,29 @@ Install this update only when the current sender is idle. Keep existing `logs/`
 files; stop the old server with Control-C and launch the updated copy. A browser
 refresh alone cannot update the Python sender. Hardware recovery has been tested
 with a simulated controller; a physical cable-disconnection trial is still needed.
+
+
+## Park when paused
+
+**Pause** finishes the movement already in the controller's queue, records the
+actual stopping position, lifts to Z0.5 and parks at X0 Y0. The display says
+**Pausing** until the park is verified. This is a controlled return to the top-left;
+it does not run another homing cycle or change the drawing registration.
+
+**Continue** checks that the park is unchanged, returns to the saved XY position
+with the pen raised, restores its previous up/down height and continues the next
+unsent drawing command. Keep the same pen fitted and leave the paper fixed.
+Cancel remains available during parking and return. If the connection or sender
+fails during this auxiliary movement, the record is retained but automatic
+recovery is blocked because the physical resume point is uncertain.
+
+## Expanded pen inventory
+
+The selectors now offer 29 pens: the existing 19 Pigma Microns, seven Stabilo
+Point 88 fine 0.4 mm pens (red 88/40, blue 88/41, green 88/43, yellow 88/44,
+orange 88/54, purple 88/55 and pink 88/56), and three Uni-ball Eye UB-157E
+0.7 mm fine pens (black, blue and red). References are recorded as supplied
+in Pens.txt. Existing Micron pen IDs and default selections are preserved;
+the additional families can be selected for any colour pass. Pen labels and
+saved jobs retain the brand, size and reference. Changing pens does not adjust
+hatch spacing, pen height or machine settings automatically.
