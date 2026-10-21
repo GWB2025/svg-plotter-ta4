@@ -1,0 +1,12 @@
+/* Colour theme browsing shares the plotting window without interrupting jobs. */
+[hidden] { display: none !important; }
+.app-tabs { display: flex; gap: .6rem; margin: 1.5rem 0; }
+.app-tabs [aria-selected="true"] { background: #203832; color: white; }
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.theme-card { background: #fff; border: 1px solid #d4ded7; border-radius: 12px; padding: 1.2rem; min-width: 0; }
+.theme-card h3 { margin: 0; }
+.theme-match { color: #52695d; font-size: .9rem; }
+.theme-swatches { display: flex; height: 54px; border: 1px solid #d4ded7; border-radius: 6px; overflow: hidden; margin: .8rem 0; }
+.theme-swatches span { flex: 1; }
+.theme-card li { margin: .4rem 0; overflow-wrap: anywhere; }
+.theme-card ul { padding-left: 1.2rem; }

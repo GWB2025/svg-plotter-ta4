@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297">
+<title>Four coloured shapes</title>
+<desc>A red square, blue circle, green triangle and purple wave. Plot each colour with its matching pen, returning to the top-left between colours.</desc>
+<g fill="none" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+<rect stroke="#d32f2f" x="50" y="93.5" width="45" height="45"/>
+<circle stroke="#1565c0" cx="137.5" cy="116" r="22.5"/>
+<path stroke="#2e7d32" d="M72.5 158.5 L50 203.5 L95 203.5 Z"/>
+<path stroke="#7b1fa2" d="M115 181 C125 151 150 211 160 181"/>
+</g>
+</svg>
