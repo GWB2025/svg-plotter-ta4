@@ -189,6 +189,7 @@ class PlotTests(unittest.TestCase):
         for reason in ('partial','modes'):
             with self.subTest(reason=reason):
                 self.plot.close()
+                self.plot.action('discard', {})
                 self.machine.opens = 0
                 self.machine.mode = 'Idle'
                 self.machine.partial = reason == 'partial'

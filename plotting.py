@@ -4,6 +4,7 @@ import fcntl
 import hashlib
 import json
 import math
+import os
 import re
 import sys
 import threading
@@ -164,6 +165,9 @@ class Plotter:
         self.pen_ready = threading.Event()
         self.thread = self.s = self.port_lock = None
         self.job = None
+        self.job_text = None
+        self.recovery_active = False
+        self.confirmed_pens = set()
         self.identity = None
         self.rx = b''
         self.acks = 0
@@ -179,7 +183,8 @@ class Plotter:
         if journal.exists():
             try:
                 old = json.loads(journal.read_text())
-                if old.get('phase') in ACTIVE:
+                self.restore_checkpoint(old)
+                if not self.job and old.get('phase') in ACTIVE:
                     self.data['message'] = 'A previous session ended during a job. Check the plotter locally; this window will not resume or restart it automatically.'
             except (OSError, ValueError):
                 pass
@@ -187,6 +192,14 @@ class Plotter:
     def snapshot(self):
         with self.mutex:
             result = copy.deepcopy(self.data)
+            result['recovery_available'] = bool(
+                self.recovery_active and not self.reset_seen
+                and not self.uncertain_write and self.accepted >= 1
+            )
+            result['saved_plot'] = self.recovery_active
+            passes = [p for p in (self.job or {}).get('pen_changes', [])
+                      if p['command'] in self.confirmed_pens]
+            result['recovery_pen'] = passes[-1]['pen_label'] if passes else None
             result['controller'] = copy.deepcopy(self.controller)
             result['busy'] = bool(self.thread and self.thread.is_alive())
             if self.started:
@@ -217,20 +230,91 @@ class Plotter:
         finally:
             if guard: guard.close()
 
+    @staticmethod
+    def atomic_json(path, value):
+        """Replace a complete checkpoint only after its bytes reach disk."""
+        temp = path.with_suffix('.tmp')
+        with temp.open('w') as stream:
+            json.dump(value, stream)
+            stream.write('\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        temp.replace(path)
+
     def write_journal(self):
         self.folder.mkdir(parents=True, exist_ok=True)
         state = self.snapshot()
-        if self.job: state.update(file=self.job['name'], sha256=self.job['sha256'])
-        temp = self.folder/'plotter-state.tmp'
-        temp.write_text(json.dumps(state, indent=2)+'\n')
-        temp.replace(self.folder/'plotter-state.json')
+        if self.job:
+            state.update(file=self.job['name'], sha256=self.job['sha256'])
+            job_path = self.folder / 'plotter-job.json'
+            if getattr(self, '_saved_job_id', None) != self.job['id']:
+                self.atomic_json(job_path, dict(
+                    text=self.job_text, name=self.job['name'],
+                    id=self.job['id'], sha256=self.job['sha256'],
+                ))
+                self._saved_job_id = self.job['id']
+        state['recovery'] = dict(
+            active=self.recovery_active, identity=self.identity,
+            accepted=self.accepted, pending=self.pending,
+            uncertain_write=self.uncertain_write, reset_seen=self.reset_seen,
+            confirmed_pens=sorted(self.confirmed_pens),
+            job_id=self.job['id'] if self.job else None,
+        )
+        self.atomic_json(self.folder / 'plotter-state.json', state)
         self.last_save = time.monotonic()
+
+    def restore_checkpoint(self, old):
+        """Restore bytes and bookkeeping; never connect or move on startup."""
+        if not isinstance(old, dict):
+            return
+        saved = old.get('recovery', {})
+        if not isinstance(saved, dict) or not saved.get('active'):
+            return
+        try:
+            source = json.loads((self.folder / 'plotter-job.json').read_text())
+            job = parse_job(source['text'], source['name'])
+            if (job['sha256'] != source['sha256']
+                    or job['sha256'] != old['sha256']
+                    or source['id'] != saved['job_id']):
+                raise ValueError('Saved drawing does not match its checkpoint.')
+            accepted, pending = saved['accepted'], saved['pending']
+            if not (-1 <= accepted <= pending < len(job['commands'])):
+                raise ValueError('Saved command indices are invalid.')
+            identity = saved['identity']
+            if not isinstance(identity, list) or len(identity) != 3:
+                raise ValueError('Saved USB identity is missing.')
+            job['id'] = source['id']
+            self.job, self.job_text = job, source['text']
+            self.identity = identity
+            self.accepted, self.pending = accepted, pending
+            self.uncertain_write = saved['uncertain_write']
+            self.reset_seen = saved['reset_seen']
+            self.confirmed_pens = set(saved['confirmed_pens'])
+            self.recovery_active = True
+            self._saved_job_id = job['id']
+            self.data.update(
+                phase='interrupted', accepted=accepted + 1,
+                total=len(job['commands']), elapsed=old.get('elapsed', 0),
+                pending_pen=old.get('pending_pen'),
+                message='Saved interrupted plot restored. Do not Home or move '
+                        'the paper. Review the recovery confirmation to resume.',
+            )
+            if self.uncertain_write or self.reset_seen:
+                self.data['message'] = ('Saved plot retained, but automatic resume '
+                                        'is blocked: a partial command or controller '
+                                        'reset makes progress uncertain.')
+        except (OSError, ValueError, KeyError, TypeError):
+            self.data['message'] = ('Saved plot could not be verified. It will not '
+                                    'be resumed. Keep the checkpoint files for inspection.')
 
     def load(self, text, name='drawing.gcode'):
         job = parse_job(text, name)
         with self.mutex:
             if self.thread and self.thread.is_alive(): raise ValueError('Finish or cancel the current operation first.')
+            if self.recovery_active:
+                raise ValueError('Resume or discard the saved plot before loading another drawing.')
             self.job = job
+            self.job_text = text
             self.started = None
             self.data.update(total=len(job['commands']), accepted=0, remaining=None, elapsed=0, pending_pen=None)
             self.update('ready' if self.s else 'offline', 'File checked. Review the preview before starting.')
@@ -323,9 +407,13 @@ class Plotter:
     def normal(self, command, timeout=30, controls=True, job_command=False):
         if controls: self.controls()
         target = self.acks+1
-        if job_command: self.uncertain_write = True
+        if job_command:
+            self.uncertain_write = True
+            self.save_journal()
         self.write((command+'\r').encode('ascii'))
-        if job_command: self.uncertain_write = False
+        if job_command:
+            self.uncertain_write = False
+            self.save_journal()
         end = time.monotonic()+timeout
         lines = []
         while self.acks < target:
@@ -460,16 +548,21 @@ class Plotter:
         self.reset_seen = self.uncertain_write = False
         self.accepted = self.pending = -1
         self.started = time.monotonic()
+        self.recovery_active = True
+        self.confirmed_pens = set()
         self.update('plotting', 'Drawing started.', accepted=0, total=len(self.job['commands']), attempt=0)
-        index = 0
+        self.run_commands(0)
+
+    def run_commands(self, index):
         last_poll = time.monotonic()
         checkpoints = {p['command']: p for p in self.job['pen_changes']}
-        confirmed = set()
+        confirmed = self.confirmed_pens
         while index < len(self.job['commands']):
-            if index in checkpoints and index not in confirmed:
-                self.change_pen(checkpoints[index])
-                confirmed.add(index)
             try:
+                if index in checkpoints and index not in confirmed:
+                    self.change_pen(checkpoints[index])
+                    confirmed.add(index)
+                    self.save_journal()
                 self.controls()
                 self.pending = index
                 self.normal(self.job['commands'][index], job_command=True)
@@ -481,7 +574,7 @@ class Plotter:
                 if time.monotonic()-last_poll >= 1:
                     self.status()
                     last_poll = time.monotonic()
-                if time.monotonic()-self.last_save >= 1: self.save_journal()
+                self.save_journal()
             except LinkError as exc:
                 index = self.recover(exc)
         self.update('finishing', 'All commands sent. Waiting for movement to finish…', remaining=0)
@@ -490,8 +583,39 @@ class Plotter:
             if self.recover(exc) != len(self.job['commands']): raise ValueError('Completion is uncertain.')
             final = self.controller
         self.check_home(final)
+        self.recovery_active = False
         self.update('completed', 'Completed: home reached and pen raised.', homed=True, elapsed=round(time.monotonic()-self.started))
         self.started = None
+
+    def resume_saved(self):
+        """Retry a saved job after an explicit unchanged-setup confirmation."""
+        self.acquire()
+        self.open_device(recovery=True)
+        if self.reset_seen:
+            raise ValueError('The controller reset. Saved progress cannot be resumed.')
+        if self.uncertain_write:
+            raise ValueError('A command may have been partially transmitted.')
+        state = self.status()
+        if state['offset'] is None or any(abs(v) > .01 for v in state['offset']):
+            raise ValueError('The work offset changed or could not be verified.')
+        self.check_modes()
+        if self.cancel.is_set():
+            raise Cancelled()
+        if state['state'] == 'Hold:0':
+            # Only release the controller's existing queue, after user confirmation.
+            self.write(b'~')
+        elif state['state'] not in ('Idle', 'Run'):
+            raise ValueError('The controller must be idle or safely held to resume.')
+        state = self.wait_idle(controls=False, abort=True)
+        if any(abs(v) > .01 for v in state['offset']):
+            raise ValueError('The work offset changed.')
+        index = resume_at(self.job['endpoints'], self.accepted, self.pending,
+                          state['position'])
+        self.accepted = index - 1
+        self.started = time.monotonic() - self.data.get('elapsed', 0)
+        self.update('plotting', 'Saved position verified. Resuming the same plot.',
+                    accepted=index, pending_pen=None)
+        self.run_commands(index)
 
     def recover(self, error):
         self.update('reconnecting', 'Connection lost. Checking progress before continuing.', homed=False)
@@ -541,6 +665,7 @@ class Plotter:
             self.wait_idle(controls=False)
         if self.started: self.data['elapsed'] = round(time.monotonic()-self.started)
         self.started = None
+        self.recovery_active = False
         self.update('cancelled', 'Drawing cancelled. Check the pen and use Home before a new run.', homed=False, pending_pen=None)
 
     def action(self, name, payload):
@@ -565,10 +690,29 @@ class Plotter:
                     self.pause.clear()
                 else: self.cancel.set()
                 return
-            if name == 'connect':
+            if name == 'resume':
+                if (not self.snapshot()['recovery_available'] or self.s
+                        or payload.get('ready') is not True
+                        or payload.get('job_id') != self.job['id']):
+                    raise ValueError('Confirm the unchanged paper, pen and powered '
+                                     'plotter for this saved job before resuming.')
+                self.launch('reconnecting', self.resume_saved)
+            elif name == 'discard':
+                if self.thread and self.thread.is_alive():
+                    raise ValueError('Finish the current operation first.')
+                self.recovery_active = False
+                self.close()
+                self.update('offline', 'Saved recovery discarded. Check the plotter '
+                            'and Home before starting a new drawing.', pending_pen=None)
+            elif name == 'connect':
+                if self.recovery_active:
+                    raise ValueError('Use Resume saved plot or discard it before connecting.')
                 if self.s: raise ValueError('Already connected.')
                 self.launch('connecting', self.connect, payload.get('port'))
-            elif name == 'home': self.launch('homing', self.home)
+            elif name == 'home':
+                if self.recovery_active:
+                    raise ValueError('Homing would invalidate the saved plot. Resume or discard it first.')
+                self.launch('homing', self.home)
             elif name == 'start':
                 if not self.s or not self.data['homed']: raise ValueError('Connect and Home the plotter first.')
                 if payload.get('ready') is not True: raise ValueError('Confirm the paper and plotter are ready.')
