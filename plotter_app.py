@@ -8,9 +8,9 @@ from plotting import MAX_BYTES, Plotter, job_info
 ROOT = Path(__file__).resolve().parent
 
 
-def create_plotter_app(manager=None, port=8767):
+def create_plotter_app(manager=None, port=8769):
     app = Flask(__name__, static_folder=None)
-    app.config['MAX_CONTENT_LENGTH'] = MAX_BYTES * 2 + 4096  # JSON escapes newlines and quotes.
+    app.config['MAX_CONTENT_LENGTH'] = MAX_BYTES * 2 + 64 * 1024  # JSON escapes newlines and quotes.
     plotter = manager or Plotter(ROOT/'logs')
     token = secrets.token_urlsafe(32)
     app.config['PLOTTER_TOKEN'] = token
@@ -48,7 +48,7 @@ def create_plotter_app(manager=None, port=8767):
 
     @app.get('/assets/<name>')
     def assets(name):
-        if name not in {'style.css', 'plotting.css', 'plotting.js', 'studio-layout.js', 'tooltips.js', 'tooltips-content.js', 'svg-import.js', 'pens.js', 'pens.json', 'themes.js', 'recolour.js'}:
+        if name not in {'style.css', 'plotting.css', 'plotting.js', 'svg-import.js', 'pens.js', 'pens.json', 'themes.js', 'recolour.js'}:
             return '', 404
         return send_from_directory(ROOT/'assets', name)
 

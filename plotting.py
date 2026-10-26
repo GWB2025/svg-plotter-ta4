@@ -70,7 +70,7 @@ def parse_job(text, name='drawing.gcode'):
                 if not math.isfinite(x+y) or not (0 <= x <= 210 and -297 <= y <= 0):
                     raise ValueError(f'Outside A4 on line {number}.')
                 if xyz[2] == 5 and match[5] != '900':
-                    raise ValueError('Travel move with pen down.')
+                    raise ValueError('Drawing move must use F900.')
                 length = math.hypot(x-xyz[0], y-xyz[1])
                 if xyz[2] == 5:
                     drawn += length
@@ -164,6 +164,7 @@ class Plotter:
         self.pen_ready = threading.Event()
         self.thread = self.s = self.port_lock = None
         self.job = None
+        self.job_text = ''
         self.identity = None
         self.rx = b''
         self.acks = 0
@@ -231,6 +232,7 @@ class Plotter:
         with self.mutex:
             if self.thread and self.thread.is_alive(): raise ValueError('Finish or cancel the current operation first.')
             self.job = job
+            self.job_text = text
             self.started = None
             self.data.update(total=len(job['commands']), accepted=0, remaining=None, elapsed=0, pending_pen=None)
             self.update('ready' if self.s else 'offline', 'File checked. Review the preview before starting.')

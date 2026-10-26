@@ -1,6 +1,7 @@
 """Start the local SVG plotter; opening it never connects to USB."""
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -41,13 +42,12 @@ class Launcher:
 
     def python(self):
         candidates = [
+            Path(os.environ['SVG_PLOTTER_PYTHON']) if os.environ.get('SVG_PLOTTER_PYTHON') else None,
             self.root / '.venv/bin/python',
-            Path('/Volumes/EXTRA Apps/Documents/Writing Robot T-A4/'
-                 'handwriting-studio-v2/.venv/bin/python'),
             Path(sys.executable),
         ]
         for candidate in candidates:
-            if candidate.exists():
+            if candidate and candidate.exists():
                 check = subprocess.run(
                     [str(candidate), '-c', 'import flask'],
                     capture_output=True, check=False,
