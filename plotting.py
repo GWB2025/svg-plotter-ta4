@@ -165,6 +165,10 @@ class Plotter:
         self.pen_ready = threading.Event()
         self.thread = self.s = self.port_lock = None
         self.job = None
+        self.job_text = None
+        self.recovery_active = False
+        self.pause_return = None
+        self.confirmed_pens = set()
         self.identity = None
         self.rx = b''
         self.acks = 0
