@@ -19,5 +19,5 @@ class PenCollection:
 
     def label(self, pen_id):
         pen = self.get(pen_id)
-        return (f"Pigma Micron {pen['colour']} {pen['size']}"
+        return (f"{pen.get('brand', 'Pigma Micron')} {pen['colour']} {pen['size']}"
                 f" — {pen['reference']}")

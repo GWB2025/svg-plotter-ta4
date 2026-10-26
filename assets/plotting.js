@@ -1,10 +1,11 @@
 'use strict';
 (function(root){
- const active=new Set(['connecting','homing','plotting','pausing','paused','reconnecting','finishing','cancelling','pen_change']);
+ const active=new Set(['connecting','homing','plotting','pausing','paused','reconnecting','finishing','cancelling','pen_change','resuming']);
  function permissions(s,hasJob,ready){const idle=s.connected&&!s.busy&&!active.has(s.phase);return {
-  file:!s.busy,refresh:!s.busy,connect:!s.connected&&!s.busy,disconnect:idle,home:idle,
-  start:idle&&s.homed&&hasJob&&ready,pause:s.phase==='plotting'||s.phase==='finishing',
-  continue:s.phase==='paused'||(s.phase==='pen_change'&&ready),cancel:['plotting','pausing','paused','reconnecting','finishing','pen_change'].includes(s.phase)
+  file:!s.busy&&!s.saved_plot,refresh:!s.busy,connect:!s.connected&&!s.busy&&!s.saved_plot,disconnect:idle,home:idle&&!s.saved_plot,
+  resume:!!s.recovery_available&&!s.connected&&!s.busy&&hasJob&&ready,discard:!!s.saved_plot&&!s.busy,
+  start:idle&&s.homed&&hasJob&&ready&&!s.saved_plot,pause:s.phase==='plotting'||s.phase==='finishing',
+  continue:s.phase==='paused'||(s.phase==='pen_change'&&ready),cancel:['plotting','pausing','paused','reconnecting','finishing','pen_change','resuming'].includes(s.phase)
  };}
  const duration=seconds=>seconds==null?'—':seconds<60?Math.ceil(seconds)+' sec':Math.ceil(seconds/60)+' min';
  const api={permissions,duration};if(typeof module!=='undefined'&&module.exports)module.exports=api;
@@ -13,17 +14,20 @@
  const $=id=>document.getElementById(id),ns='http://www.w3.org/2000/svg';let job=null,state={phase:'offline',connected:false,busy:false},busy=false,lastPhase='',lastPen='',travelGroup,cursor,svgPaths=null,svgName='',currentGcode='',inventory=[],penListKey='',themeSource=null,activeTheme=null;
  $('plot-setup').hidden=true;$('plot-local').hidden=false;
  async function request(path,data){const response=await fetch('/api/'+path,{method:data?'POST':'GET',headers:{'X-Plotter-Token':token,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),cache:'no-store',signal:AbortSignal.timeout(15000)});const result=await response.json();if(!response.ok)throw Error(result.error||'The plotting window did not respond.');return result;}
- function controls(){const p=permissions(state,!!job,$('plot-ready').checked);for(const [key,value] of Object.entries(p))$('plot-'+key).disabled=busy||!value;$('plot-port').disabled=busy||state.connected||state.busy;$('plot-ready').disabled=busy||(state.busy&&state.phase!=='pen_change');for(const id of ['svg-mode','svg-margin','svg-example'])$(id).disabled=busy||state.busy;for(const id of ['svg-example-load','svg-example-save'])$(id).disabled=busy||state.busy||!$('svg-example').value;$('svg-apply').disabled=busy||state.busy||!svgPaths;$('svg-download').disabled=busy||state.busy||!currentGcode;for(const select of document.querySelectorAll('.pen-choice'))select.disabled=busy||state.busy;for(const button of document.querySelectorAll('.theme-apply'))button.disabled=busy||state.busy||!job?.paths?.length;$('theme-restore').disabled=busy||state.busy||!themeSource;}
+ function controls(){const frozen=state.busy||state.saved_plot;const p=permissions(state,!!job,$('plot-ready').checked);for(const [key,value] of Object.entries(p))$('plot-'+key).disabled=busy||!value;$('plot-port').disabled=busy||state.connected||state.busy;$('plot-ready').disabled=busy||(state.busy&&state.phase!=='pen_change');for(const id of ['svg-mode','svg-margin','svg-example'])$(id).disabled=busy||frozen;for(const id of ['svg-example-load','svg-example-save'])$(id).disabled=busy||frozen||!$('svg-example').value;$('svg-apply').disabled=busy||frozen||!svgPaths;$('svg-download').disabled=busy||state.busy||!currentGcode;for(const select of document.querySelectorAll('.pen-choice'))select.disabled=busy||state.busy||state.saved_plot;for(const button of document.querySelectorAll('.theme-apply'))button.disabled=busy||frozen||!job?.paths?.length;$('theme-restore').disabled=busy||frozen||!themeSource;}
  function penName(colour){return ({'#d32f2f':'red','#1565c0':'blue','#2e7d32':'green','#7b1fa2':'purple','#ff0000':'red','#0000ff':'blue','#000000':'black'})[colour]||colour;}
  function render(){
   const pen=state.pending_pen;
+  const recovering=state.saved_plot&&!state.busy;
+  $('plot-recovery').hidden=!recovering;
+  $('plot-recovery').textContent=state.recovery_available ? 'Saved progress is available.'+(state.recovery_pen?' Keep '+state.recovery_pen+' fitted.':'')+' Reconnect the USB cable without switching off, resetting or homing the plotter. Keep the same paper and pen fitted. Resume may first finish movement already queued in the controller.' : 'Saved progress is retained, but the app cannot safely identify a resume point. Do not restart over the existing drawing. Discard saved recovery only when you intend to abandon it.';
   const penKey=state.phase==='pen_change'&&pen ? String(pen.index)+pen.colour : '';
   if(penKey!==lastPen){$('plot-ready').checked=false;lastPen=penKey;}
   $('plot-message').textContent=state.message;
   const required=pen?.pen_label||pen?.colour||'';
   $('plot-continue').textContent=state.phase==='pen_change' ? 'Continue with '+required : 'Continue';
-  $('pen-ready-label').textContent=state.phase==='pen_change' ? required+' is fitted and ready' : 'Paper is in place and the pen and bed are ready';
-  const listKey=(job?.id||'')+String(!!state.busy);
+  $('pen-ready-label').textContent=state.phase==='pen_change' ? required+' is fitted and ready' : recovering ? 'The plotter has stayed powered, has not been reset, homed or moved; the paper and the same pen are unchanged' : 'Paper is in place and the pen and bed are ready';
+  const listKey=(job?.id||'')+String(!!state.busy)+String(!!state.saved_plot);
   if(listKey!==penListKey){
    penListKey=listKey;
    $('pen-sequence').replaceChildren(...(job?.pen_changes||[]).map((p,i)=>{
@@ -39,7 +43,7 @@
      }
      select.append(group);
     }
-    select.value=p.pen_id||'';select.disabled=busy||state.busy;
+    select.value=p.pen_id||'';select.disabled=busy||state.busy||state.saved_plot;
     select.onchange=()=>perform(async()=>{
      const choices=Object.fromEntries(job.pen_changes.map(p=>[p.colour,p.pen_id||'']));choices[p.colour]=select.value;
      const text=currentGcode.replace(/^; PEN_CHANGE (#[0-9a-fA-F]{6})(?: [a-z0-9-]+)?$/gm,(_,colour)=>'; PEN_CHANGE '+colour+(choices[colour]?' '+choices[colour]:''));
@@ -52,7 +56,7 @@
 
   const accepted=state.accepted||0,total=state.total||0,percent=total?100*accepted/total:0;
   $('plot-progress').value=state.phase==='completed'?100:Math.min(percent,99.9);
-  $('plot-progress-text').textContent=total?accepted.toLocaleString()+' of '+total.toLocaleString()+' commands sent ('+Math.floor(percent)+'%).'+(accepted===total&&state.phase!=='completed'?' Waiting for confirmed completion.':''):'No drawing started.';
+  $('plot-progress-text').textContent=total?accepted.toLocaleString()+' of '+total.toLocaleString()+' commands acknowledged ('+Math.floor(percent)+'%).'+(accepted===total&&state.phase!=='completed'?' Waiting for confirmed completion.':''):'No drawing started.';
   $('plot-time').textContent=state.elapsed?'Elapsed: '+duration(state.elapsed)+(state.remaining!=null&&active.has(state.phase)?' · remaining movement: at least '+duration(state.remaining):''):'';
   const pos=state.controller?.position;$('plot-position').textContent=pos?'Last reported position: X '+pos[0].toFixed(2)+' · Y '+pos[1].toFixed(2)+' mm · '+(Math.abs(pos[2]-.5)<.02?'pen up':Math.abs(pos[2]-5)<.02?'pen down':'pen moving'):'';
   if(cursor&&pos){cursor.setAttribute('cx',pos[0]);cursor.setAttribute('cy',-pos[1]);cursor.hidden=false;}
@@ -120,7 +124,8 @@
  $('svg-apply').onclick=()=>perform(applySVG);
  for(const id of ['svg-mode','svg-margin'])$(id).onchange=()=>{if(svgPaths)perform(applySVG);};
  $('svg-download').onclick=()=>{if(!currentGcode)return;const url=URL.createObjectURL(new Blob([currentGcode],{type:'text/plain'}));const a=document.createElement('a');a.href=url;a.download=job.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
- for(const action of ['connect','disconnect','home','start','pause','continue','cancel'])$('plot-'+action).onclick=()=>perform(async()=>{state=await request('action',{action,port:$('plot-port').value,job_id:job?.id,ready:$('plot-ready').checked,pen_index:state.pending_pen?.index});render();});
+ for(const action of ['connect','disconnect','home','start','pause','continue','cancel','resume'])$('plot-'+action).onclick=()=>perform(async()=>{state=await request('action',{action,port:$('plot-port').value,job_id:job?.id,ready:$('plot-ready').checked,pen_index:state.pending_pen?.index});render();});
+ $('plot-discard').onclick=()=>perform(async()=>{if(!window.confirm('Abandon recovery of this saved plot? This does not stop or move the plotter.'))return;state=await request('action',{action:'discard'});render();});
  async function applyTheme(theme){
    if(state.busy||!job?.paths?.length)throw Error('Load an idle drawing before applying a theme.');
    const status=await request('status');if(status.busy)throw Error('Wait for the current drawing to finish.');
@@ -143,5 +148,5 @@
  };
  $('plot-refresh').onclick=()=>perform(refreshPorts);$('plot-ready').onchange=controls;$('plot-travel').onchange=()=>{if(travelGroup)travelGroup.style.display=$('plot-travel').checked?'':'none';};
  async function poll(){try{state=await request('status');render();}catch(error){state={...state,phase:'unavailable',connected:false,busy:true};controls();$('plot-error').textContent='Cannot reach the Mac sender. Check the plotter locally; movement may continue. '+error.message;}setTimeout(poll,750);}
- perform(async()=>{const response=await fetch('/assets/pens.json',{cache:'no-store'});if(!response.ok)throw Error('Cannot load the pen inventory. Restart the app.');inventory=await response.json();await refreshPorts();job=(await request('job')).job;describeJob();state=await request('status');render();}).finally(poll);
+ perform(async()=>{const response=await fetch('/assets/pens.json',{cache:'no-store'});if(!response.ok)throw Error('Cannot load the pen inventory. Restart the app.');inventory=await response.json();await refreshPorts();const saved=await request('job');job=saved.job;currentGcode=saved.text||'';describeJob();state=await request('status');render();}).finally(poll);
 })(typeof window==='undefined'?globalThis:window);

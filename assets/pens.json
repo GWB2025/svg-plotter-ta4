@@ -9,7 +9,8 @@
       "#c93f55",
       "#d32f2f",
       "#ff0000"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "green-05",
@@ -22,7 +23,8 @@
       "#2e7d32",
       "#008000",
       "#00ff00"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "blue-05",
@@ -34,7 +36,8 @@
       "#2685bd",
       "#1565c0",
       "#0000ff"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "purple-05-30644",
@@ -45,7 +48,8 @@
     "matches": [
       "#7b1fa2",
       "#800080"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "light-brown-05",
@@ -55,7 +59,8 @@
     "set": "Coloured Micron 05",
     "matches": [
       "#a97850"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "orange-05",
@@ -66,7 +71,8 @@
     "matches": [
       "#df7b28",
       "#ffa500"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "purple-05-35780",
@@ -74,7 +80,8 @@
     "size": "05",
     "reference": "85511 35780",
     "set": "Coloured Micron 05",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "pink-05",
@@ -84,7 +91,8 @@
     "set": "Coloured Micron 05",
     "matches": [
       "#ffc0cb"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "dark-brown-05",
@@ -94,7 +102,8 @@
     "set": "Coloured Micron 05",
     "matches": [
       "#493126"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-12",
@@ -102,7 +111,8 @@
     "size": "12",
     "reference": "85511 32331",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-10",
@@ -110,7 +120,8 @@
     "size": "10",
     "reference": "85511 32330",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-08",
@@ -118,7 +129,8 @@
     "size": "08",
     "reference": "85511 31833",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-05",
@@ -130,7 +142,8 @@
       "#000000",
       "#222222",
       "#203832"
-    ]
+    ],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-04",
@@ -138,7 +151,8 @@
     "size": "04",
     "reference": "85511 34213",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-03",
@@ -146,7 +160,8 @@
     "size": "03",
     "reference": "85511 30640",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-02",
@@ -154,7 +169,8 @@
     "size": "02",
     "reference": "85511 31837",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-01",
@@ -162,7 +178,8 @@
     "size": "01",
     "reference": "85511 30636",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-005",
@@ -170,7 +187,8 @@
     "size": "005",
     "reference": "85511 31841",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
   },
   {
     "id": "black-003",
@@ -178,6 +196,117 @@
     "size": "003",
     "reference": "85511 30724",
     "set": "Black Micron",
-    "matches": []
+    "matches": [],
+    "brand": "Pigma Micron"
+  },
+  {
+    "id": "stabilo-point88-red",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Red",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/40",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#ff0000"
+    ]
+  },
+  {
+    "id": "stabilo-point88-blue",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Blue",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/41",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#0000ff"
+    ]
+  },
+  {
+    "id": "stabilo-point88-green",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Green",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/43",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#008000"
+    ]
+  },
+  {
+    "id": "stabilo-point88-yellow",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Yellow",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/44",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#ffff00"
+    ]
+  },
+  {
+    "id": "stabilo-point88-orange",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Orange",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/54",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#ffa500"
+    ]
+  },
+  {
+    "id": "stabilo-point88-purple",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Purple",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/55",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#800080"
+    ]
+  },
+  {
+    "id": "stabilo-point88-pink",
+    "brand": "Stabilo Point 88 fine",
+    "colour": "Pink",
+    "size": "0.4 mm",
+    "reference": "Art. No. 88/56",
+    "set": "Stabilo Point 88 \u00b7 0.4 mm",
+    "matches": [
+      "#ffc0cb"
+    ]
+  },
+  {
+    "id": "uniball-eye-black",
+    "brand": "Uni-ball Eye UB-157E",
+    "colour": "Black",
+    "size": "0.7 mm fine",
+    "reference": "49 02778 315156",
+    "set": "Uni-ball Eye UB-157E \u00b7 0.7 mm",
+    "matches": [
+      "#000000"
+    ]
+  },
+  {
+    "id": "uniball-eye-blue",
+    "brand": "Uni-ball Eye UB-157E",
+    "colour": "Blue",
+    "size": "0.7 mm fine",
+    "reference": "49 02778 315163",
+    "set": "Uni-ball Eye UB-157E \u00b7 0.7 mm",
+    "matches": [
+      "#0000ff"
+    ]
+  },
+  {
+    "id": "uniball-eye-red",
+    "brand": "Uni-ball Eye UB-157E",
+    "colour": "Red",
+    "size": "0.7 mm fine",
+    "reference": "49 02778 315170",
+    "set": "Uni-ball Eye UB-157E \u00b7 0.7 mm",
+    "matches": [
+      "#ff0000"
+    ]
   }
 ]

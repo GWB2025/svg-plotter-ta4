@@ -54,7 +54,7 @@ def create_plotter_app(manager=None, port=8769):
 
     @app.get('/api/identity')
     def identity():
-        return jsonify(service='handwriting-studio-plotter', version=5, colour_changes=True, pen_inventory=True, colour_themes=True, theme_changes=True)
+        return jsonify(service='handwriting-studio-plotter', version=7, parked_pause=True, durable_recovery=True, colour_changes=True, pen_inventory=True, colour_themes=True, theme_changes=True)
 
     @app.get('/api/status')
     def status():
@@ -68,7 +68,8 @@ def create_plotter_app(manager=None, port=8769):
     @app.get('/api/job')
     def current_job():
         with plotter.mutex:
-            return jsonify(job=job_info(plotter.job) if plotter.job else None)
+            return jsonify(job=job_info(plotter.job) if plotter.job else None,
+                           text=plotter.job_text)
 
     @app.post('/api/load')
     def load():
