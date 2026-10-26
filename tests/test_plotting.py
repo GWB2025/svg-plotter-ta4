@@ -247,7 +247,7 @@ class PlotTests(unittest.TestCase):
     def test_service_auth_upload_and_public_page_never_open_usb(self):
         app = create_plotter_app(self.plot)
         client = app.test_client()
-        base = 'http://127.0.0.1:8767'
+        base = 'http://127.0.0.1:8769'
         token = app.config['PLOTTER_TOKEN']
         headers = {'X-Plotter-Token':token,'Origin':base}
         self.assertEqual(client.get('/',base_url=base).status_code,200)
