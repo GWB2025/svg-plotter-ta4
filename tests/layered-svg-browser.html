@@ -1,0 +1,39 @@
+<!doctype html><body>RUNNING<script src="../assets/svg-import.js"></script><script>
+(async()=>{try{
+const fixture=SVGImport.extractPaths('<svg xmlns="http://www.w3.org/2000/svg" width="30mm" height="30mm" viewBox="0 0 30 30"><rect fill="red" x="1" y="1" width="20" height="20"/><g transform="translate(5 5)"><rect fill="white" width="10" height="10"/></g><rect fill="blue" x="15" y="1" width="6" height="20"/></svg>');
+const test=await SVGImport.layeredPaths(fixture,{mode:'actual',spacing:.5});
+for(let i=0;i<test.length;i++){
+const [[x,y],[z]]=test[i];const lo=Math.min(x,z),hi=Math.max(x,z);
+if(y>5&&y<15&&lo<14.8&&hi>5.2)throw Error('Hatching crossed white occlusion');
+if(test.colours[i]==='#ff0000'&&hi>15.1)throw Error('Red crossed blue');
+}
+const hole=SVGImport.extractPaths('<svg xmlns="http://www.w3.org/2000/svg" width="30mm" height="30mm" viewBox="0 0 30 30"><path fill="red" fill-rule="evenodd" d="M1 1H21V21H1Z M5 5H15V15H5Z"/></svg>');
+const holePaths=await SVGImport.layeredPaths(hole,{mode:'actual',spacing:.5});
+for(const [[a,y],[b]] of holePaths)if(y>5&&y<15&&Math.min(a,b)<14.8&&Math.max(a,b)>5.2)throw Error('Filled compound-path hole');
+const withWhite=await SVGImport.layeredPaths(fixture,{mode:'actual',spacing:.5,leaveWhite:false});
+if(!withWhite.colours.includes('#ffffff'))throw Error('Explicit white fill missing');
+for(const path of withWhite)for(const [x,y] of path)if(x>21.1||y>21.1||x<.9||y<.9)throw Error('Page background was filled');
+const scaled=await SVGImport.layeredPaths(fixture,{mode:'fit',spacing:.5,margin:20});
+const landscape=SVGImport.extractPaths('<svg xmlns="http://www.w3.org/2000/svg" width="40mm" height="30mm" viewBox="0 0 40 30"><rect x="2" y="3" width="30" height="20" fill="red"/><rect x="8" y="9" width="6" height="8" fill="white"/><rect x="25" y="3" width="7" height="20" fill="blue"/></svg>');
+for(const rotation of [90,180,270]){
+ const rotated=await SVGImport.layeredPaths(landscape,{mode:'actual',rotation,spacing:.5});
+ if(!rotated.colours.includes('#ff0000')||!rotated.colours.includes('#0000ff'))throw Error('Rotated colours missing');
+ for(let i=0;i<rotated.length;i++){
+  const [[x,y],[z]]=rotated[i];
+  for(let t=.05;t<1;t+=.1){
+   const px=x+(z-x)*t;
+   const [sx,sy]=rotation===90?[y,30-px]:rotation===180?[40-px,30-y]:[40-y,px];
+   if(sx>8.15&&sx<13.85&&sy>9.15&&sy<16.85)throw Error('Rotated hatching crossed white');
+   if(rotated.colours[i]==='#ff0000'&&sx>25.15)throw Error('Rotated red crossed blue');
+   if(sx<1.85||sx>32.15||sy<2.85||sy>23.15)throw Error('Rotated hatching escaped drawing');
+  }
+ }
+}
+const ys=[...new Set(scaled.map(p=>p[0][1]))].sort((a,b)=>a-b);
+if(Math.abs(ys[1]-ys[0]-.5)>.001)throw Error('Spacing changed after fitting');
+const translucent=SVGImport.extractPaths('<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10" fill="red" opacity=".5"/></svg>');
+let rejected=false;try{await SVGImport.layeredPaths(translucent)}catch{rejected=true;}
+if(!rejected)throw Error('Transparency should be rejected');
+document.body.textContent=JSON.stringify({ok:true,fixturePaths:test.length,colours:[...new Set(test.colours)]});
+}catch(e){document.body.textContent='FAIL '+e.stack;}})();
+</script>

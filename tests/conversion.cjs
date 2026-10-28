@@ -41,3 +41,18 @@ test('pen-change controls require readiness and still permit cancel', () => {
   assert.equal(permissions(state,true,false).cancel,true);
   assert.equal(permissions(state,true,true).start,false);
 });
+
+test('page sizes fit and centre within the chosen sheet', () => {
+  for (const [width,height] of [[148,210],[105,148],[148,105],[114,162],[110,220],[162,229],[120,180]]) {
+    const paths=placePaths([[[0,0],[100,100]]],{width,height,margin:10});
+    const [a,b]=paths[0];
+    assert.ok(a[0]>=10 && a[1]>=10 && b[0]<=width-10 && b[1]<=height-10);
+    assert.ok(Math.abs(a[0]+b[0]-width)<1e-8);
+    assert.ok(Math.abs(a[1]+b[1]-height)<1e-8);
+  }
+});
+test('page validation rejects unsafe sizes, margins and actual-size overflow', () => {
+  const p=[[[0,0],[106,100]]];
+  for(const options of [{width:0},{width:211},{height:298},{width:NaN},{width:105,height:148,margin:53},{width:105,height:148,mode:'actual'}])
+    assert.throws(()=>placePaths(p,options));
+});

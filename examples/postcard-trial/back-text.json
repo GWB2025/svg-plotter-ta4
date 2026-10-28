@@ -1,0 +1,27 @@
+{
+  "format": "svg-plotter-postcard",
+  "schema": 1,
+  "divider": true,
+  "message": {
+    "text": "Hello from the plotter!\n\nA postcard trial for\nsize, spacing and\npen alignment.",
+    "enabled": true,
+    "font": "sans",
+    "size": 14,
+    "spacing": 7,
+    "x": 8,
+    "y": 18,
+    "width": 58,
+    "align": "left"
+  },
+  "address": {
+    "text": "A. Sample\n10 Example Road\nTEST TOWN\nAB1 2CD",
+    "enabled": true,
+    "font": "sans",
+    "size": 12,
+    "spacing": 9,
+    "x": 80,
+    "y": 48,
+    "width": 62,
+    "align": "left"
+  }
+}

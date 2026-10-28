@@ -1,0 +1,133 @@
+<section id="stock-panel" role="tabpanel" aria-labelledby="stock-tab" hidden>
+  <div class="section-heading"><div><h2>Your pen stock</h2><p>Keep a record of the pens you own. Changes are saved on this Mac and survive app updates.</p></div><button id="pen-add" class="primary" disabled>Add pen</button></div>
+  <p class="subtle">Edits apply to future assignments. Loaded drawings and interrupted jobs retain their original pen details. Mark a pen unavailable when it runs out or is missing.</p>
+  <section class="swatch-panel" aria-labelledby="swatch-heading">
+    <h3 id="swatch-heading">Pen colour swatches</h3>
+    <p>Plot a labelled colour patch for every available pen in a set, or just one pen. The T-A4 pauses at home for each named pen; fit it and choose Continue. Labels use the same pen as their patch.</p>
+    <div class="catalogue-toolbar">
+      <label>Pen set <select id="swatch-set" disabled></select></label>
+      <label>Pens to sample <select id="swatch-pen" disabled></select></label>
+      <label>Patch size (mm) <input id="swatch-size" type="number" min="10" max="30" step="1" value="20"></label>
+      <label>Line spacing (mm) <input id="swatch-spacing" type="number" min="0.02" max="1" step="0.01" value="0.3"></label>
+      <label class="inline-check"><input id="swatch-cross" type="checkbox"> Add perpendicular cross-hatching</label>
+    </div>
+    <p id="swatch-summary" role="status">Loading swatch settings…</p>
+    <div class="swatch-workspace">
+      <svg id="swatch-preview" viewBox="0 0 210 297" role="img" aria-label="A4 pen swatch sheet preview"></svg>
+      <div class="swatch-details">
+        <div class="catalogue-toolbar"><label>Sheet <select id="swatch-sheet" disabled></select></label><button id="swatch-prepare" class="primary" disabled>Prepare swatch sheet</button><button id="swatch-download" disabled>Save swatch G-code</button></div>
+        <p class="subtle">A4 portrait, at actual size. Preview colours are the current catalogue estimates. Prepare opens Plot drawing for review; it never starts the plotter. Each sheet is a separate job.</p>
+        <div class="swatch-key-wrap"><table class="stock-table"><thead><tr><th scope="col">Patch</th><th scope="col">Physical pen</th><th scope="col">Current RGB</th><th scope="col">Reading</th></tr></thead><tbody id="swatch-key"></tbody></table></div>
+      </div>
+    </div>
+    <p id="swatch-error" class="error-message" role="alert"></p>
+    <details class="swatch-help"><summary>Scan your swatches with ColorReader EZ</summary>
+      <ol><li>Use the paper you intend to draw on. Choose line spacing no greater than the pen’s actual drawn line width so the patch has no white gaps. Start with 0.3 mm for your Sharpies; finer pens may need closer spacing. Cross-hatching adds a second ink pass and may make the colour darker.</li><li>Let the ink dry fully. Calibrate ColorReader EZ in the Datacolor phone app, then place it flat on the centre of each uniform patch. Keep it clear of labels and edges. Inspect the patch for streaks or gaps before reading.</li><li>Open the measured colour’s Info in the Datacolor app to see RGB or HEX. Use Enter RGB beside the matching numbered pen below to save those values to its ink colour. Read each patch individually.</li></ol>
+      <p>The default 20 × 20 mm patch exceeds Datacolor’s recommended minimum uniform area of 6.35 × 6.35 mm. The result describes that ink on that paper at this fill density. Device readings are entered manually; SVG Plotter does not connect to ColorReader Bluetooth.</p>
+      <p><a href="https://www.datacolor.com/colorreader/docs/ColorReaderEZ-UserGuide-EN.pdf" target="_blank" rel="noopener">Datacolor ColorReader EZ user guide (2025)</a></p>
+    </details>
+  </section>
+  <div class="catalogue-toolbar">
+    <label>Find a pen <input type="search" id="stock-search" placeholder="Brand, colour, reference or collection"></label>
+    <label>Show <select id="stock-availability"><option value="all">All pens</option><option value="available">Available pens</option><option value="unavailable">Unavailable pens</option></select></label>
+    <button id="catalogue-refresh">Refresh catalogue</button>
+  </div>
+  <p id="stock-count" class="subtle" role="status">Loading your stock…</p>
+  <div class="stock-table-wrap"><table class="stock-table"><thead><tr><th scope="col">Ink</th><th scope="col">Pen</th><th scope="col">Collection</th><th scope="col">Availability</th><th scope="col">Actions</th></tr></thead><tbody id="stock-rows"></tbody></table></div>
+  <p id="stock-empty" hidden>No pens match your search.</p>
+  <section class="backup-panel"><h3>Back up or share your pens, inks and themes</h3><p>Export one file containing your pens, bottled inks and colour themes. Import merges a backup into your catalogue; conflicting items are added as separate copies.</p><div class="catalogue-toolbar"><button id="catalogue-export" disabled>Export catalogue</button><label>Import a backup <input type="file" id="catalogue-import" accept=".json,application/json" disabled></label></div></section>
+  <p id="catalogue-status" role="status"></p><p id="catalogue-error" class="error-message" role="alert"></p>
+</section>
+
+<section id="inks-panel" role="tabpanel" aria-labelledby="inks-tab" hidden>
+  <div class="section-heading"><div><h2>Your ink stock</h2><p>Keep bottled inks and refills here, then record which ink is in each refillable pen.</p></div><button id="ink-add" class="primary" disabled>Add ink</button></div>
+  <p>Add any brand or range, including inks you discover in <a href="https://www.youtube.com/watch?v=8bsWp6pKeYk" target="_blank" rel="noopener">Dan Catt’s Pens &amp; Paper lesson</a>. Thank you, Dan, for sharing your experience with pens, inks and papers.</p>
+  <p class="subtle">Your stock starts empty. Record the exact product and its stated properties, or leave them Unknown. Use the maker’s guidance for compatibility with your pen.</p>
+  <div class="catalogue-toolbar">
+    <label>Find an ink <input id="inks-search" type="search" placeholder="Brand, colour, type, paper or notes"></label>
+    <label>Show <select id="inks-availability"><option value="all">All inks</option><option value="available">Available inks</option><option value="unavailable">Unavailable inks</option></select></label>
+    <button id="inks-refresh">Refresh catalogue</button>
+  </div>
+  <p id="inks-count" class="subtle" role="status">Loading your inks…</p>
+  <div class="stock-table-wrap"><table class="stock-table"><thead><tr><th scope="col">Colour</th><th scope="col">Ink</th><th scope="col">Properties and notes</th><th scope="col">Availability</th><th scope="col">Actions</th></tr></thead><tbody id="inks-rows"></tbody></table></div>
+  <p id="inks-empty" hidden>No inks yet. Choose Add ink to record your first bottle.</p>
+  <details class="swatch-help"><summary>Use an ink with a pen and measure its colour</summary>
+    <ol><li>Add the bottle here. Its RGB / HEX colour is your estimate or a reading from a dried swatch; record the paper used.</li><li>In <strong>Pen stock</strong>, add or edit the refillable pen and select its <strong>Bottled ink</strong>. Choose <strong>Copy ink RGB to pen</strong> if you want to use the bottle’s colour as the pen’s starting colour.</li><li>Use that pen’s <strong>Swatch</strong> button to prepare a patch, plot it and let it dry. Enter the ColorReader RGB in the pen editor. Keep a separate pen reading for each pen and paper combination you use.</li></ol>
+    <p>Ink names appear in new drawing assignments and pen-change prompts. Editing a bottle does not overwrite a pen’s RGB reading or a loaded drawing. Marking a bottle unavailable leaves already-filled pens available. A bottle is recorded separately from the physical pen used to plot it.</p>
+  </details>
+  <section class="backup-panel"><h3>Back up your inks</h3><p>Export pens, inks and themes together, including the links between them. Older pen-only backups can still be imported.</p><div class="catalogue-toolbar"><button id="inks-export" disabled>Export catalogue</button><label>Import a backup <input id="inks-import" type="file" accept=".json,application/json" disabled></label></div></section>
+  <p id="inks-status" role="status"></p><p id="inks-error" class="error-message" role="alert"></p>
+</section>
+
+<dialog role="dialog" aria-modal="true" id="pen-editor" aria-labelledby="pen-editor-title" class="app-dialog">
+  <div class="dialog-heading"><h2 id="pen-editor-title">Add pen</h2><button type="button" data-close aria-label="Close pen editor">Close</button></div>
+  <form id="pen-form">
+    <div class="editor-fields">
+      <label>Brand and range <input id="pen-brand" required maxlength="120" placeholder="e.g. Stabilo Point 88"></label>
+      <label>Pen colour or identifying name <input id="pen-colour" required maxlength="120" placeholder="e.g. Turquoise"></label>
+      <label>Tip designation or width <input id="pen-size" required maxlength="120" placeholder="e.g. 05 or 0.4 mm"></label>
+      <label>Product reference (optional) <input id="pen-reference" maxlength="120" placeholder="e.g. 88/51"></label>
+      <label>Collection <input id="pen-set" maxlength="120" placeholder="My pens"></label>
+      <label>Bottled ink (optional) <select id="pen-bottle"></select></label>
+      <div class="pen-bottle-copy"><button id="pen-copy-ink" type="button" disabled>Copy ink RGB to pen</button><p class="subtle">Link the ink currently in this pen. Copy its RGB only when needed; your pen’s own reading is kept otherwise.</p></div>
+      <div><label for="pen-ink">Approximate ink colour</label><div class="ink-input"><input id="pen-ink" type="color" value="#203832"><input id="pen-ink-hex" aria-label="Ink colour hex code" pattern="#[0-9a-fA-F]{6}" required maxlength="7" value="#203832"></div></div>
+      <fieldset class="pen-rgb"><legend>Measured RGB (0–255)</legend><div><label>Red <input id="pen-red" type="number" min="0" max="255" step="1" required></label><label>Green <input id="pen-green" type="number" min="0" max="255" step="1" required></label><label>Blue <input id="pen-blue" type="number" min="0" max="255" step="1" required></label></div></fieldset>
+    </div>
+    <p class="subtle">Enter RGB or HEX from the measured reading in the Datacolor phone app. The fields stay in sync. Saving updates this pen’s catalogue ink; loaded drawings retain their saved colours. Screens may still differ from the physical ink. Tip details are descriptive; changing them does not alter hatch spacing, pen height or machine settings.</p>
+    <label class="inline-check"><input type="checkbox" id="pen-available" checked> Available to use</label>
+    <p id="pen-editor-error" class="error-message" role="alert"></p>
+    <div class="dialog-actions"><button type="submit" class="primary" id="pen-save" data-catalogue-write>Save pen</button></div>
+  </form>
+</dialog>
+
+<dialog role="dialog" aria-modal="true" id="ink-editor" aria-labelledby="ink-editor-title" class="app-dialog">
+  <div class="dialog-heading"><h2 id="ink-editor-title">Add ink</h2><button type="button" data-close aria-label="Close ink editor">Close</button></div>
+  <form id="ink-form">
+    <div class="editor-fields">
+      <label>Brand and range <input id="bottle-brand" required maxlength="120" placeholder="As printed on the bottle"></label>
+      <label>Colour name <input id="bottle-colour" required maxlength="120" placeholder="As printed on the bottle"></label>
+      <label>Ink type <select id="bottle-kind"><option>Unspecified</option><option>Fountain pen ink</option><option>Technical drawing ink</option><option>Dip pen ink</option><option>Other</option></select></label>
+      <label>Product reference / bottle size (optional) <input id="bottle-reference" maxlength="120" placeholder="Product code, 30 ml, cartridge…"></label>
+      <label>Lightfastness <input id="bottle-lightfastness" maxlength="120" placeholder="Unknown, maker’s rating or your test"></label>
+      <label>Water resistance <input id="bottle-waterproof" maxlength="120" placeholder="Unknown, maker’s claim or your test"></label>
+      <label>Paper used for reading (optional) <input id="bottle-paper" maxlength="120" placeholder="Paper name and finish"></label>
+      <div><label for="bottle-ink">Approximate or measured colour</label><div class="ink-input"><input id="bottle-ink" type="color" value="#203832"><input id="bottle-ink-hex" aria-label="Bottled ink HEX colour" pattern="#[0-9a-fA-F]{6}" required maxlength="7" value="#203832"></div></div>
+      <fieldset class="pen-rgb"><legend>RGB reading (0–255)</legend><div><label>Red <input id="bottle-red" type="number" min="0" max="255" step="1" required></label><label>Green <input id="bottle-green" type="number" min="0" max="255" step="1" required></label><label>Blue <input id="bottle-blue" type="number" min="0" max="255" step="1" required></label></div></fieldset>
+      <label class="ink-notes">Notes (optional) <input id="bottle-notes" maxlength="600" placeholder="Compatible pens, drying, cleaning, source or measurement notes"></label>
+    </div>
+    <p class="subtle">Enter RGB or HEX from ColorReader’s phone app, or choose an approximate colour. A reading describes the ink on the tested paper. Lightfastness and water resistance are recorded separately; neither is inferred from colour or ink type.</p>
+    <label class="inline-check"><input id="bottle-available" type="checkbox" checked> Available to use</label>
+    <p id="ink-editor-error" class="error-message" role="alert"></p>
+    <div class="dialog-actions"><button id="ink-save" type="submit" class="primary" data-catalogue-write>Save ink</button></div>
+  </form>
+</dialog>
+
+<dialog role="dialog" aria-modal="true" id="theme-editor" aria-labelledby="theme-editor-title" class="app-dialog theme-dialog">
+  <div class="dialog-heading"><h2 id="theme-editor-title">Create theme</h2><button type="button" data-close aria-label="Close theme editor">Close</button></div>
+  <form id="theme-form">
+    <div class="editor-fields"><label>Theme name <input id="theme-name" required maxlength="120" placeholder="e.g. Autumn postcard"></label><label>Notes (optional) <input id="theme-note" maxlength="600" placeholder="Paper, occasion or colour notes"></label></div>
+    <h3>Drawing palette</h3><p class="subtle">Assign pens or bare paper to the palette rows. Original drawing colour groups use these rows in order. Extra groups cycle through the accent rows. A chosen outline row is reserved for the final original colour group.</p>
+    <div id="theme-rows"></div><div class="catalogue-toolbar"><button id="theme-row-add" type="button">Add palette row</button><label>Outline colour <select id="theme-outline"></select></label></div>
+    <p class="subtle">The swatches describe your palette; the drawing preview uses the chosen pens’ ink colours. Bare-paper rows are left unplotted. At least one row must use a pen.</p>
+    <p id="theme-editor-error" class="error-message" role="alert"></p>
+    <div class="dialog-actions"><button type="submit" class="primary" id="theme-save" data-catalogue-write>Save theme</button></div>
+  </form>
+</dialog>
+
+<dialog role="dialog" aria-modal="true" id="import-editor" aria-labelledby="import-title" class="app-dialog">
+  <div class="dialog-heading"><h2 id="import-title">Import pens, inks and themes</h2><button type="button" data-close aria-label="Close import preview">Close</button></div>
+  <p id="import-summary"></p><p>Existing items are retained. Identical items are reused; conflicting pens, inks or themes are added as separate copies, with their ink links and pen assignments preserved. No drawing or recovery information is changed.</p>
+  <p id="import-error" class="error-message" role="alert"></p><div class="dialog-actions"><button id="import-confirm" class="primary" data-catalogue-write>Merge into my catalogue</button></div>
+</dialog>
+
+<dialog role="dialog" aria-modal="true" id="about-dialog" aria-labelledby="about-title" class="app-dialog">
+  <div class="dialog-heading"><h2 id="about-title">About SVG Plotter</h2><button type="button" data-close aria-label="Close About">Close</button></div>
+  <p class="about-version">Version {{APP_VERSION}} · macOS application</p>
+  <p>Prepare SVG artwork and send checked drawing commands to a USB-connected Writing Robot T-A4 pen plotter.</p>
+  <ul><li>SVG outlines and layered colour fills, with adjustable hatch spacing.</li><li>A4, A5, A6, postcards, envelopes and custom page sizes within the 210 × 297 mm bed.</li><li>Postcard messages and addresses with stroke fonts and adjustable layouts.</li><li>Personal pen and ink stock, editable colour themes and catalogue backups.</li><li>Pen changes, parked pauses and recovery of interrupted drawings.</li></ul>
+  <p>Your catalogue, recovery records and logs are kept on this Mac, separately from the application. Replacing the app preserves them. Opening the app does not connect to USB or move the plotter.</p>
+  <p>Created by Gordon Brindle. Inspired by <a href="https://youtu.be/nD3XlqFhcEI" target="_blank" rel="noopener">Rev Dan Catt’s pen-plotting workflow</a>. Nine supplied digital palettes are adapted from <a href="https://studioyorktown.github.io/coloryorktownhall/" target="_blank" rel="noopener">Studio Yorktown Color Town Hall</a>. Ink swatches are approximate.</p>
+  <p>The <strong>Materials guide</strong> contains the supplied pens, inks and papers comparison based on <a href="https://www.youtube.com/watch?v=8bsWp6pKeYk" target="_blank" rel="noopener">Dan Catt’s 1.3.0 - Pens &amp; Paper | Drawing Machines 101</a>. Thank you, Dan, for sharing your experience. The supplied reference notes retain their source attribution; the app licence does not claim ownership of Dan’s material.</p>
+  <p>© 2026 Gordon Brindle · MIT licence. Built with Python, Flask, pySerial and pywebview; packaged with PyInstaller. Bundled Hershey fonts retain their original acknowledgements and terms in FONT_LICENCES.txt. Third-party components retain their respective licences.</p>
+  <p><a href="https://github.com/GWB2025/svg-plotter-ta4" target="_blank" rel="noopener">Project and source code</a></p>
+</dialog>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297">
+<title>Layered colour fill check</title>
+<desc>Choose Layered colour fills. The red square is hidden by the white circle and blue square. No red hatching should cross either overlaid shape.</desc>
+<rect x="55" y="98.5" width="80" height="80" fill="#d32f2f"/>
+<circle cx="95" cy="138.5" r="23" fill="#ffffff"/>
+<g transform="translate(115 128.5)"><rect width="40" height="50" fill="#1565c0"/></g>
+</svg>

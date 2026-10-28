@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="110mm" height="220mm" viewBox="0 0 110 220" data-plotter-guide="stock-v1">
+<title>Stock positioning guide · 110 × 220 mm</title>
+<desc>Plot at 100% onto a sacrificial carrier sheet fixed to the bed. The top-left corner is home X0 Y0. Align the stock with the four corner marks. Four inward ticks mark the edge centres; the cross marks the sheet centre. All dimensions are millimetres. Do not fit or scale this guide.</desc>
+<g fill="none" stroke="#000000" stroke-width="0.3" stroke-linecap="butt" stroke-linejoin="miter">
+  <path d="M0 6 L0 0 L6 0"/>
+  <path d="M104 0 L110 0 L110 6"/>
+  <path d="M110 214 L110 220 L104 220"/>
+  <path d="M6 220 L0 220 L0 214"/>
+  <path d="M55 0 L55 4"/>
+  <path d="M55 216 L55 220"/>
+  <path d="M0 110 L4 110"/>
+  <path d="M106 110 L110 110"/>
+  <path d="M51 110 L59 110"/>
+  <path d="M55 106 L55 114"/>
+</g>
+</svg>

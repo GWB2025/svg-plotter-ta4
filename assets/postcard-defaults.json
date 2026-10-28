@@ -1,0 +1,13 @@
+{
+  "format": "svg-plotter-postcard",
+  "schema": 1,
+  "divider": false,
+  "message": {
+    "text": "", "enabled": true, "font": "script", "size": 14,
+    "spacing": 6, "x": 8, "y": 14, "width": 58, "align": "left"
+  },
+  "address": {
+    "text": "", "enabled": true, "font": "sans", "size": 12,
+    "spacing": 12, "x": 80, "y": 46, "width": 62, "align": "left"
+  }
+}

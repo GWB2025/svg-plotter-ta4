@@ -1,0 +1,20 @@
+<section id="postcard-panel" role="tabpanel" aria-labelledby="postcard-tab" hidden>
+  <div class="section-heading"><div><h2>Write a postcard</h2><p>Message on the left, postal address on the right. Adjust the layout on a 148 × 105 mm landscape postcard.</p></div></div>
+  <div class="postcard-font-import"><button id="postcard-font-import" type="button" disabled title="Choose TrueType (.ttf) fonts to keep on this Mac and use in either text block.">Import fonts…</button><input id="postcard-font-files" type="file" accept=".ttf,font/ttf" multiple hidden><span id="postcard-font-status" role="status">Loading fonts…</span><p class="subtle">Imported TrueType fonts plot letter outlines. The bundled Hershey fonts use single strokes. Imports stay on this Mac.</p></div>
+  <div class="postcard-workspace">
+    <div id="postcard-fields" class="postcard-fields" aria-label="Postcard text and layout"></div>
+    <div class="postcard-review">
+      <h3>Postcard preview <span class="subtle">148 × 105 mm</span></h3>
+      <div class="postcard-paper"><svg id="postcard-preview" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 105" role="img" aria-label="Postcard text layout preview"></svg></div>
+      <div class="postcard-options"><label><input id="postcard-printed" type="checkbox" checked> Show printed card reference</label><label><input id="postcard-guides" type="checkbox" checked> Show layout guides</label><label><input id="postcard-divider" type="checkbox" disabled> Draw centre divider line</label></div>
+      <p class="subtle">The pale printed-card reference and dashed boxes are preview guides only. The address starts near the four printed lines, 12 mm apart; adjust against your card after a trial. Select Draw centre divider only for a blank card. X and Y are measured from the card’s top-left home position.</p>
+      <ul id="postcard-errors" class="error-message" aria-live="polite"></ul>
+      <p id="postcard-summary" class="subtle" role="status">Loading the postcard editor…</p>
+      <div class="postcard-history"><button id="postcard-undo" type="button" disabled>Undo</button><button id="postcard-redo" type="button" disabled>Redo</button><button id="postcard-reset" type="button" disabled>Reset positions</button></div>
+      <div class="postcard-actions"><button id="postcard-save" type="button" disabled>Save draft</button><button id="postcard-export" type="button" disabled>Export SVG</button><button id="postcard-prepare" type="button" class="primary" disabled>Prepare to plot</button></div>
+      <p id="postcard-draft-status" role="status"></p><p id="postcard-error" class="error-message" role="alert"></p><p id="postcard-plot-status" class="subtle"></p>
+      <p class="subtle">Save your draft to keep the text and settings for another session. Preparing a layout switches to Plot drawing for pen selection and the usual start checks; it does not move the plotter.</p>
+      <details class="postcard-help"><summary>Text sizes and placement</summary><p>Size is in typographic points (1 pt = 0.353 mm of the font’s em square); actual letter height varies with the font. Line spacing is the distance between baselines in millimetres. Y places the top of an ordinary capital letter; accents may extend above it. Width controls word wrapping. Enter inserts a new line, and blank lines are retained.</p><p>Use Import fonts to add .ttf files (up to 2 MB each). They appear in both Font menus with an “outline” label and are saved separately from this draft. Keep the originals as a backup. The four bundled Hershey fonts are designed for pen strokes. Accents and common punctuation are supported; unavailable characters are reported. Save an overflowing draft if you want to refine it later, but correct the highlighted issues before exporting or plotting.</p></details>
+    </div>
+  </div>
+</section>

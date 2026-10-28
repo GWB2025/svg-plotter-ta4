@@ -4,6 +4,13 @@ const pens=require('../assets/pens.js');
 const inventory=require('../assets/pens.json');
 const {makeColourGcode}=require('../assets/svg-import.js');
 
+test('unavailable stock is never suggested, and a new custom ink is recognised',()=>{
+ const pen={id:'custom',colour:'Teal',brand:'Test',size:'Fine',ink:'#128080',matches:[]};
+ assert.equal(pens.suggest('#128080',[pen]),'custom');
+ assert.equal(pens.suggest('#128080',[{...pen,available:false}]),'');
+ assert.equal(pens.label(pen),'Test Teal Fine');
+});
+
 test('postcard colours select the available Kyoto pens',()=>{
  assert.equal(pens.suggest('#df7b28',inventory),'orange-05');
  assert.equal(pens.suggest('#a97850',inventory),'light-brown-05');
@@ -20,7 +27,9 @@ test('selected black size is retained in exported pen marker',()=>{
 test('all added pen families have distinct labels and stable references', () => {
  const pens=require('../assets/pens.json');
  const {label}=require('../assets/pens.js');
- assert.equal(pens.length,29);
+ assert.equal(pens.length,53);
+ assert.equal(new Set(pens.map(p=>p.id)).size,pens.length);
+ assert.equal(pens.filter(p=>p.brand==='Sharpie Glam Pop').length,24);
  assert.equal(pens.filter(p=>p.brand==='Stabilo Point 88 fine').length,7);
  assert.equal(pens.filter(p=>p.brand==='Uni-ball Eye UB-157E').length,3);
  const yellow=pens.find(p=>p.id==='stabilo-point88-yellow');

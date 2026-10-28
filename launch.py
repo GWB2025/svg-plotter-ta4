@@ -10,6 +10,8 @@ import urllib.error
 import urllib.request
 import webbrowser
 
+from app_info import VERSION
+
 
 class Launcher:
     """Reuse an existing sender window or start one on loopback."""
@@ -37,6 +39,12 @@ class Launcher:
                 'An older SVG Plotter sender is still running. Stop it in its '
                 'Terminal window with Control-C, then open this launcher again. '
                 'Wait for any active drawing to finish before stopping it.'
+            )
+        if data.get('app_version') != VERSION:
+            raise RuntimeError(
+                'A different version of SVG Plotter is already running. '
+                'Finish any drawing and save any work, then quit that app '
+                'or stop its Terminal sender before opening this version.'
             )
         return True
 

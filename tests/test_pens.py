@@ -9,7 +9,7 @@ from test_colour_plotting import COLOURS, ColourTests
 class PenTests(unittest.TestCase):
     def test_inventory_and_duplicate_reference_are_preserved(self):
         pens = PenCollection()
-        self.assertEqual(len(pens.items), 29)
+        self.assertEqual(len(pens.items), 53)
         self.assertEqual(pens.label('black-003'),
                          'Pigma Micron Black 003 — 85511 30724')
         self.assertEqual(pens.get('purple-05-30644')['reference'], '85511 30644')

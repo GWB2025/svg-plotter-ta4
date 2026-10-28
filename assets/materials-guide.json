@@ -1,0 +1,168 @@
+{
+  "title": "Pen Plotter Pens, Inks, and Papers Comparison",
+  "credit": "Dan Catt",
+  "source_title": "1.3.0 - Pens & Paper | Drawing Machines 101",
+  "supplied_date": "2026-10-27",
+  "entries": [
+    {
+      "name": "Sakura Pigma Micron",
+      "category": "Pen",
+      "material": "Technical pen / Fiber tip (0.15 mm tested)",
+      "compatibility": "Smooth Bristol paper (chewed up by rough/textured watercolor paper)",
+      "lightfastness": "Yes (Lightfast / Permanent)",
+      "notes": "Super fine lines; cheap, precise, but fiber nib wears down/degrades quickly on textured paper.",
+      "timestamp": "02:00",
+      "source": "1"
+    },
+    {
+      "name": "Rotring Isograph",
+      "category": "Pen",
+      "material": "Technical pen / Refillable metal nib",
+      "compatibility": "Cold pressed watercolor paper / Textured paper & Bristol",
+      "lightfastness": "Yes (Uses permanent/pigment ink)",
+      "notes": "The 'ultimate pen' for plotters; highly precise, refillable metal nib that survives textured paper; small reservoir (though expandable); permanent ink colors can be slightly dull.",
+      "timestamp": "05:05",
+      "source": "1"
+    },
+    {
+      "name": "Staedtler Permanent Pens",
+      "category": "Pen",
+      "material": "Permanent ink marker",
+      "compatibility": "Not in source",
+      "lightfastness": "Yes (Permanent ink)",
+      "notes": "Permanent pigment-based ink, but colors (magenta, cyan, yellow, purple, brown) are noticeably duller than non-permanent dye inks.",
+      "timestamp": "15:30",
+      "source": "1"
+    },
+    {
+      "name": "Stabilo 88",
+      "category": "Pen",
+      "material": "Fiber tip",
+      "compatibility": "Smooth Bristol paper (ruined by textured paper)",
+      "lightfastness": "No (Not lightfast, colorful inks fade over time)",
+      "notes": "Great vivid colors, but hexagonal shape makes color alignment slightly annoying; do not sell artwork made with these as they fade.",
+      "timestamp": "02:22",
+      "source": "1"
+    },
+    {
+      "name": "TWSBI Eco",
+      "category": "Pen",
+      "material": "Fountain pen / Metal nib (EF, F, M, Stub)",
+      "compatibility": "Cold pressed watercolor paper / Textured paper",
+      "lightfastness": "Depends on ink used (Fountain pen inks are generally dye-based & not lightfast)",
+      "notes": "Plunger mechanism with huge ink capacity; metal nib doesn't wear down on rough/textured paper; Fine or Medium nibs recommended.",
+      "timestamp": "04:30",
+      "source": "1"
+    },
+    {
+      "name": "Brush Pens",
+      "category": "Pen",
+      "material": "Brush tip",
+      "compatibility": "Handmade / Rough textured paper",
+      "lightfastness": "Depends on ink (Permanent or Non-permanent)",
+      "notes": "Fun expressive line quality; pairs exceptionally well with rough handmade papers.",
+      "timestamp": "20:00",
+      "source": "1"
+    },
+    {
+      "name": "Sakura Gelly Roll (White)",
+      "category": "Pen",
+      "material": "Gel / White ink tip",
+      "compatibility": "Fabriano Black paper",
+      "lightfastness": "Not in source",
+      "notes": "Very difficult to draw clear lines (feels like dusty chalk); temperature dependent (needs warm environment); requires drawing lines twice (forward and back) to show well.",
+      "timestamp": "03:00",
+      "source": "1"
+    },
+    {
+      "name": "Uni-ball UM-120NM",
+      "category": "Pen",
+      "material": "Metallic / Gel pen",
+      "compatibility": "Fabriano Black paper",
+      "lightfastness": "Not in source",
+      "notes": "Works better than white gel pens in cold studio environments; metallic silver gives a great high-contrast effect on black paper.",
+      "timestamp": "03:25",
+      "source": "1"
+    },
+    {
+      "name": "Uni-ball Eye (Fine & Micro)",
+      "category": "Pen",
+      "material": "Ballpoint pen",
+      "compatibility": "Works well on various papers (including textured)",
+      "lightfastness": "Not in source",
+      "notes": "Clear window shows remaining ink level; highly reliable; can leave cap off without drying out easily.",
+      "timestamp": "03:45",
+      "source": "1"
+    },
+    {
+      "name": "Posca Pens",
+      "category": "Pen",
+      "material": "Paint marker / Acrylic tip",
+      "compatibility": "Black paper",
+      "lightfastness": "Not in source",
+      "notes": "Requires manual repriming/pumping to keep ink flowing during continuous plotting, making long automated runs difficult.",
+      "timestamp": "19:20",
+      "source": "1"
+    },
+    {
+      "name": "Pilot Parallel Pen",
+      "category": "Pen",
+      "material": "Wide calligraphy metal plate nib",
+      "compatibility": "Not in source",
+      "lightfastness": "Not in source",
+      "notes": "Very wide nib capable of unique broad strokes.",
+      "timestamp": "20:30",
+      "source": "1"
+    },
+    {
+      "name": "Faber-Castell Grip-Matic",
+      "category": "Pencil",
+      "material": "Auto-feeding mechanical pencil",
+      "compatibility": "Not in source",
+      "lightfastness": "Not in source",
+      "notes": "Presses down to automatically advance lead while drawing up/down strokes; solves mechanical pencil dulling issues on plotters with high pen lifts.",
+      "timestamp": "21:05",
+      "source": "1"
+    },
+    {
+      "name": "Tungsten Engraving Scribe",
+      "category": "Engraving Tool",
+      "material": "Tungsten metal sharp tip",
+      "compatibility": "Copper plates (for printmaking)",
+      "lightfastness": "Not Applicable",
+      "notes": "Used for etching/engraving directly onto copper plates to create traditional prints on plotters.",
+      "timestamp": "22:30",
+      "source": "1"
+    },
+    {
+      "name": "Bristol Paper (Extra Smooth)",
+      "category": "Paper",
+      "material": "Not Applicable",
+      "compatibility": "Fiber tip pens (Sakura Micron, Stabilo 88)",
+      "lightfastness": "Not Applicable",
+      "notes": "Bright white, ultra-smooth surface. Gives clean lines like a laser printer, but fiber tips last longer on it.",
+      "timestamp": "05:55",
+      "source": "1"
+    },
+    {
+      "name": "Cold Pressed Watercolor Paper (Bockingford)",
+      "category": "Paper",
+      "material": "Not Applicable",
+      "compatibility": "Metal nib pens (Fountain pens, Rotring Isograph, Ballpoints)",
+      "lightfastness": "Not Applicable",
+      "notes": "Textured/rough paper that gives artwork a high-end, classic handmade feel; ruins/chews up fiber-tip pens very quickly.",
+      "timestamp": "06:10",
+      "source": "1"
+    },
+    {
+      "name": "Fabriano Black Paper",
+      "category": "Paper",
+      "material": "Not Applicable",
+      "compatibility": "White gel pens, Metallic pens (Uni-ball silver), Posca pens",
+      "lightfastness": "Not Applicable",
+      "notes": "Deep black paper ideal for creating high-contrast plots with light or metallic inks.",
+      "timestamp": "06:30",
+      "source": "1"
+    }
+  ]
+}

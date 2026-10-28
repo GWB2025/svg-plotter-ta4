@@ -1,0 +1,13 @@
+{
+  "groups": [
+    {"id": "lowercase", "label": "Lowercase", "characters": "abcdefghijklmnopqrstuvwxyz"},
+    {"id": "uppercase", "label": "Capitals", "characters": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"},
+    {"id": "numbers", "label": "Numbers", "characters": "0123456789"},
+    {"id": "punctuation", "label": "Punctuation", "characters": ".,!?;:'\"()-/&@£%+’–"}
+  ],
+  "baseline": 220,
+  "x_height_line": 120,
+  "cap_height_line": 60,
+  "descender_line": 280,
+  "guide_aligned": "fgjpqyABCDEFGHIJKLMNOPQRSTUVWXYZ.,!?;:'\"()-/&@£%+’–"
+}

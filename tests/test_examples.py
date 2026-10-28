@@ -13,7 +13,7 @@ class ExampleTests(unittest.TestCase):
             'node', '-e',
             "console.log(JSON.stringify(require('./assets/svg-import.js').examples))",
         ], text=True))
-        self.assertEqual(len(catalogue), 5)
+        self.assertEqual(len(catalogue), 6)
         for example in catalogue:
             with self.subTest(name=example['name']):
                 text = (Path('examples') / example['name']).read_text()

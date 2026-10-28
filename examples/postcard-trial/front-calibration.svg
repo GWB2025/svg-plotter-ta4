@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="148mm" height="105mm" viewBox="0 0 148 105">
+  <title>Postcard trial: three 10 mm squares and a registration frame</title>
+  <desc>Keep original size and position. The card sits at the top-left origin. Use Orange, Light Brown and Dark Brown Micron pens in that order. Each square measures 10 mm; the frame has a 5 mm inset.</desc>
+  <g fill="none" stroke-width="0.3">
+    <path stroke="#e87825" d="M20 20 L30 20 L30 30 L20 30 Z M20 40 L60 80"/>
+    <path stroke="#a36d46" d="M40 20 L50 20 L50 30 L40 30 Z M40 40 L80 80"/>
+    <path stroke="#684332" d="M60 20 L70 20 L70 30 L60 30 Z M5 5 L143 5 L143 100 L5 100 Z M69 52.5 L79 52.5 M74 47.5 L74 57.5"/>
+  </g>
+</svg>

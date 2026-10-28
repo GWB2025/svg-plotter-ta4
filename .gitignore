@@ -3,3 +3,14 @@ __pycache__/
 *.py[cod]
 logs/
 .DS_Store
+
+build/
+dist/
+*.spec
+
+.venv-macos/
+
+!packaging/svg_plotter.spec
+
+handwriting-capture/data/
+handwriting-capture/tests/manual-smoke-data/

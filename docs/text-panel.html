@@ -1,0 +1,27 @@
+<section id="text-panel" role="tabpanel" aria-labelledby="text-tab" hidden>
+  <div class="section-heading"><div><h2>Plot text &amp; ASCII art</h2><p>Keep every space, column and line break. Convert characters to fixed-width pen strokes.</p></div></div>
+  <div class="text-workspace">
+    <div>
+      <label class="text-file-label">Open a plain text file <input id="text-file" type="file" accept=".txt,text/plain"></label>
+      <p id="text-source" class="subtle" role="status">Choose a .txt file, or paste text below.</p>
+      <label for="text-content">Text to plot</label>
+      <textarea id="text-content" rows="24" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="50000" aria-describedby="text-edit-help" placeholder="Paste your ASCII art or text here…"></textarea>
+      <p id="text-edit-help" class="subtle">Lines never wrap. Leading spaces, blank lines and any signature or website footer are retained. You can edit the text before plotting; Save text keeps your edits as a .txt file.</p>
+    </div>
+    <div class="text-review">
+      <h3>Pen-path preview</h3>
+      <p class="subtle">Hershey Sans · fixed-width stroke lettering</p>
+      <div class="text-settings">
+        <label>Column spacing (mm) <input id="text-cell" type="number" min="0.5" max="40" step="0.1" value="3"></label>
+        <label>Row spacing (mm) <input id="text-row" type="number" min="0.5" max="60" step="0.1" value="5"></label>
+        <label>Tab width (columns) <input id="text-tabs" type="number" min="1" max="16" step="1" value="8"></label>
+      </div>
+      <div class="text-paper"><svg id="text-preview" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" role="img" aria-label="Fixed-width text pen-path preview"></svg></div>
+      <p id="text-summary" role="status">Loading the stroke font…</p>
+      <p id="text-error" class="error-message" role="alert"></p>
+      <div class="postcard-actions"><button id="text-save" type="button" disabled>Save text</button><button id="text-export" type="button" disabled>Export SVG</button><button id="text-prepare" type="button" class="primary" disabled>Prepare to plot</button></div>
+      <p id="text-plot-status" class="subtle" role="status"></p>
+      <p class="subtle">Spacing is the original size before fitting. Prepare to plot uses the page size and margin in Plot drawing and starts with Fit drawing to page. Review the fitted size, rotation and physical pen there. Choose Keep original size and position for the spacing shown above. Preparing does not move the plotter.</p>
+    </div>
+  </div>
+</section>

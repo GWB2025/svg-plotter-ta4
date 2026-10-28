@@ -13,19 +13,31 @@ import uuid
 from pathlib import Path
 
 from pens import PenCollection
+from catalogue import Catalogue
+from recovery import RecoveryPlanner
+from plotter_profiles import PlotterProfile, ProfileStore
 
 PENS = PenCollection()
 
 MAX_BYTES = 32 * 1024 * 1024
-ACTIVE = {'connecting', 'homing', 'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'cancelling', 'pen_change', 'resuming'}
-MOVE = re.compile(r'G90 G1 (Z(0\.5|5)|X(-?\d+(?:\.\d+)?) Y(-?\d+(?:\.\d+)?)) F(900|1200|2400|3000)')
+ACTIVE = {'connecting', 'homing', 'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'cancelling', 'pen_change', 'resuming', 'rehome', 'recovery_pen'}
+MOVE = re.compile(r'G90 G1 (Z(-?\d+(?:\.\d+)?)|X(-?\d+(?:\.\d+)?) Y(-?\d+(?:\.\d+)?)) F(\d+(?:\.\d+)?)')
 
 
-def parse_job(text, name='drawing.gcode'):
+def parse_job(text, name='drawing.gcode', pens=None, profile=None):
+    profile = profile or PlotterProfile.default()
+    settings = profile.data
+    up, down = settings['pen_up'], settings['pen_down']
+    pens = pens if pens is not None else PENS
     if not isinstance(text, str) or len(text.encode('utf-8')) > MAX_BYTES:
         raise ValueError('Choose a G-code file smaller than 32 MB.')
+    markers = [line.strip().removeprefix('; PLOTTER_PROFILE ')
+               for line in text.splitlines()
+               if line.strip().startswith('; PLOTTER_PROFILE')]
+    if markers != [profile.fingerprint] and (markers or profile.data != PlotterProfile.DEFAULT):
+        raise ValueError('This G-code belongs to a different plotter profile. Select its original profile or prepare the source SVG again.')
     commands, points, times, paths, travel, stroke = [], [], [], [], [], []
-    xyz = [0., 0., .5]
+    xyz = [0., 0., up]
     pen_changes, path_colours = [], []
     current_colour = '#203832'
     seconds = drawn = moved = 0.
@@ -34,13 +46,13 @@ def parse_job(text, name='drawing.gcode'):
             marker = re.fullmatch(r'; PEN_CHANGE (#[0-9a-fA-F]{6})(?: ([a-z0-9-]{1,60}))?', raw.strip())
             if not marker or len(commands) < 2:
                 raise ValueError('Invalid pen-change marker.')
-            if xyz != [0., 0., .5]:
+            if xyz != [0., 0., up]:
                 raise ValueError('Pen changes require home with the pen raised.')
             if pen_changes and pen_changes[-1]['command'] == len(commands):
                 raise ValueError('Duplicate pen-change marker.')
             current_colour = marker[1].lower()
             pen_id = marker[2]
-            pen_label = PENS.label(pen_id) if pen_id else current_colour
+            pen_label = pens.label(pen_id) if pen_id else current_colour
             pen_changes.append(dict(command=len(commands), colour=current_colour,
                                     index=len(pen_changes), pen_id=pen_id,
                                     pen_label=pen_label))
@@ -57,28 +69,33 @@ def parse_job(text, name='drawing.gcode'):
             match = MOVE.fullmatch(line)
             if not match or not commands:
                 raise ValueError(f'Unsupported command on line {number}. Use a Studio G-code download.')
+            feed = float(match[5])
+            if feed not in {settings[key] for key in ('draw_feed', 'travel_feed', 'lift_feed', 'stroke_feed')}:
+                raise ValueError('Feed rate does not match the selected plotter profile.')
             if match[2]:
                 z = float(match[2])
-                if z == 5 and xyz[2] != 5:
-                    stroke = [[xyz[0], -xyz[1]]]
-                if z == .5 and xyz[2] == 5:
+                if z not in (up, down):
+                    raise ValueError('Pen height does not match the selected plotter profile.')
+                if z == down and xyz[2] != down:
+                    stroke = [profile.page_point(*xyz[:2])]
+                if z == up and xyz[2] == down:
                     paths.append(stroke)
                     path_colours.append(current_colour)
                     stroke = []
                 xyz[2] = z
             else:
                 x, y = float(match[3]), float(match[4])
-                if not math.isfinite(x+y) or not (0 <= x <= 210 and -297 <= y <= 0):
-                    raise ValueError(f'Outside A4 on line {number}.')
-                if xyz[2] == 5 and match[5] != '900':
-                    raise ValueError('Drawing move must use F900.')
+                if not profile.contains(x, y):
+                    raise ValueError(f'Outside the {settings["width"]:g} × {settings["height"]:g} mm plotter bed on line {number}.')
+                if xyz[2] == down and feed != settings['draw_feed']:
+                    raise ValueError(f'Drawing move must use F{settings["draw_feed"]:g}.')
                 length = math.hypot(x-xyz[0], y-xyz[1])
-                if xyz[2] == 5:
+                if xyz[2] == down:
                     drawn += length
-                    stroke.append([x, -y])
+                    stroke.append(profile.page_point(x, y))
                 else:
                     moved += length
-                    travel.append([[xyz[0], -xyz[1]], [x, -y]])
+                    travel.append([profile.page_point(*xyz[:2]), profile.page_point(x, y)])
                 xyz[:2] = [x, y]
             seconds += math.dist(before, xyz) / float(match[5]) * 60
         commands.append(line)
@@ -86,9 +103,9 @@ def parse_job(text, name='drawing.gcode'):
         times.append(seconds)
         if len(commands) > 600000:
             raise ValueError('File too large: at most 600,000 commands.')
-    if commands[:2] != ['G21', 'G90 G1 Z0.5 F1200']:
+    if commands[:2] != ['G21', profile.lift()]:
         raise ValueError('Expected millimetres and initial pen lift.')
-    if xyz[2] != .5 or xyz[:2] != [0., 0.]:
+    if xyz[2] != up or xyz[:2] != [0., 0.]:
         raise ValueError('File must finish at home with the pen raised.')
     if len(commands) < 3:
         raise ValueError('The file contains no drawing or pen check.')
@@ -97,12 +114,14 @@ def parse_job(text, name='drawing.gcode'):
     return dict(id=str(uuid.uuid4()), name=Path(str(name)).name[:120], commands=commands,
                 endpoints=points, times=times, paths=paths, travel=travel, bounds=bounds,
                 seconds=seconds, draw_mm=drawn, travel_mm=moved,
-                pen_changes=pen_changes, path_colours=path_colours,
+                pen_changes=pen_changes, path_colours=path_colours, profile=profile.snapshot(),
+                pen_snapshot=[copy.deepcopy(pens.get(pen_id)) for pen_id in
+                              dict.fromkeys(p['pen_id'] for p in pen_changes if p['pen_id'])],
                 sha256=hashlib.sha256(text.encode()).hexdigest())
 
 
 def job_info(job):
-    return {k: job[k] for k in ('id', 'name', 'paths', 'travel', 'bounds', 'seconds', 'draw_mm', 'travel_mm', 'sha256', 'pen_changes', 'path_colours')} | {'commands': len(job['commands'])}
+    return {k: job[k] for k in ('id', 'name', 'paths', 'travel', 'bounds', 'seconds', 'draw_mm', 'travel_mm', 'sha256', 'pen_changes', 'path_colours', 'profile')} | {'commands': len(job['commands'])}
 
 
 def resume_at(points, accepted, pending, position):
@@ -137,16 +156,20 @@ def serial_module():
     return serial
 
 
-def devices():
+def devices(profile=None):
+    profile = profile or PlotterProfile.default()
+    if profile.data['driver'] != 'grbl-z':
+        return []
     serial_module()
     from serial.tools import list_ports
-    return [dict(port=p.device, name=p.product or 'T-A4 plotter', identity=[p.vid, p.pid, p.serial_number])
-            for p in list_ports.comports() if (p.vid, p.pid) == (6790, 32832) and p.serial_number]
+    return [dict(port=p.device, name=p.product or p.description or 'Serial plotter', identity=[p.vid, p.pid, p.serial_number or p.device])
+            for p in list_ports.comports() if p.vid is not None and (profile.data['usb_vid'] is None or
+                (p.vid, p.pid) == (profile.data['usb_vid'], profile.data['usb_pid']))]
 
 
-def open_serial(port):
+def open_serial(port, baudrate=115200):
     s = serial_module().Serial()
-    s.port, s.baudrate, s.timeout, s.write_timeout = port, 115200, .1, 2
+    s.port, s.baudrate, s.timeout, s.write_timeout = port, baudrate, .1, 2
     s.dtr = s.rts = False
     s.exclusive = True
     s.open()
@@ -156,7 +179,11 @@ def open_serial(port):
 class Plotter:
     def __init__(self, folder, ports=devices, opener=open_serial, settle=2.5, retry_delay=3, lock_path=None):
         self.folder = Path(folder)
-        self.ports, self.opener = ports, opener
+        self.catalogue = Catalogue(self.folder)
+        self.profiles = ProfileStore(self.folder)
+        self.profile = self.profiles.active
+        self.ports = (lambda: devices(self.profile)) if ports is devices else ports
+        self.opener = (lambda port: open_serial(port, self.profile.data['baudrate'])) if opener is open_serial else opener
         self.settle, self.retry_delay = settle, retry_delay
         self.lock_path = Path(lock_path or Path.home()/'.handwriting-studio-plotter.lock')
         self.mutex = threading.RLock()
@@ -167,6 +194,10 @@ class Plotter:
         self.job = None
         self.job_text = None
         self.recovery_active = False
+        self.execution_checkpoint = None
+        self.rehome_checkpoint = None
+        self.recovery_report = None
+        self._rehome_candidate = None
         self.pause_return = None
         self.confirmed_pens = set()
         self.identity = None
@@ -193,9 +224,11 @@ class Plotter:
     def snapshot(self):
         with self.mutex:
             result = copy.deepcopy(self.data)
+            result['profile'] = self.profile.snapshot()
             result['recovery_available'] = bool(
                 self.recovery_active and not self.reset_seen
                 and not self.uncertain_write and self.pause_return is None
+                and self.rehome_checkpoint is None
                 and self.accepted >= 1
             )
             result['pause_return'] = copy.deepcopy(self.pause_return)
@@ -204,6 +237,10 @@ class Plotter:
                       if p['command'] in self.confirmed_pens]
             result['recovery_pen'] = passes[-1]['pen_label'] if passes else None
             result['controller'] = copy.deepcopy(self.controller)
+            point = self.rehome_point()
+            result['rehome_available'] = point is not None
+            result['rehome_plan'] = (RecoveryPlanner(self.job).describe(point)
+                                     if point else None)
             result['busy'] = bool(self.thread and self.thread.is_alive())
             if self.started:
                 result['elapsed'] = round(time.monotonic()-self.started)
@@ -254,6 +291,7 @@ class Plotter:
                 self.atomic_json(job_path, dict(
                     text=self.job_text, name=self.job['name'],
                     id=self.job['id'], sha256=self.job['sha256'],
+                    pens=self.job.get('pen_snapshot', []), profile=self.job['profile'],
                 ))
                 self._saved_job_id = self.job['id']
         state['recovery'] = dict(
@@ -262,6 +300,9 @@ class Plotter:
             uncertain_write=self.uncertain_write, reset_seen=self.reset_seen,
             confirmed_pens=sorted(self.confirmed_pens),
             pause_return=self.pause_return,
+            execution_checkpoint=self.execution_checkpoint,
+            rehome_checkpoint=self.rehome_checkpoint,
+            report=self.recovery_report,
             job_id=self.job['id'] if self.job else None,
         )
         self.atomic_json(self.folder / 'plotter-state.json', state)
@@ -276,7 +317,10 @@ class Plotter:
             return
         try:
             source = json.loads((self.folder / 'plotter-job.json').read_text())
-            job = parse_job(source['text'], source['name'])
+            pens = (PenCollection(source['pens']) if 'pens' in source
+                    else self.catalogue.collection())
+            profile = PlotterProfile(source.get('profile', PlotterProfile.DEFAULT))
+            job = parse_job(source['text'], source['name'], pens, profile)
             if (job['sha256'] != source['sha256']
                     or job['sha256'] != old['sha256']
                     or source['id'] != saved['job_id']):
@@ -288,6 +332,7 @@ class Plotter:
             if not isinstance(identity, list) or len(identity) != 3:
                 raise ValueError('Saved USB identity is missing.')
             job['id'] = source['id']
+            self.profile = profile
             self.job, self.job_text = job, source['text']
             self.identity = identity
             self.accepted, self.pending = accepted, pending
@@ -295,6 +340,16 @@ class Plotter:
             self.reset_seen = saved['reset_seen']
             self.confirmed_pens = set(saved['confirmed_pens'])
             self.pause_return = saved.get('pause_return')
+            self.controller = old.get('controller')
+            self.recovery_report = saved.get('report') or self.controller
+            planner = RecoveryPlanner(job)
+            for attribute in ('execution_checkpoint', 'rehome_checkpoint'):
+                point = saved.get(attribute)
+                if point is not None:
+                    point = planner.validate(point)
+                    if point['next_index'] > accepted + 1:
+                        raise ValueError('Checkpoint exceeds recorded progress.')
+                setattr(self, attribute, point)
             self.recovery_active = True
             self._saved_job_id = job['id']
             self.data.update(
@@ -309,21 +364,85 @@ class Plotter:
                                         'is blocked: a partial command or controller '
                                         'reset or interrupted parking move makes progress uncertain.')
         except (OSError, ValueError, KeyError, TypeError):
+            self.job = self.job_text = None
+            self.recovery_active = False
+            self.execution_checkpoint = self.rehome_checkpoint = None
             self.data['message'] = ('Saved plot could not be verified. It will not '
                                     'be resumed. Keep the checkpoint files for inspection.')
 
+    def rehome_point(self):
+        """Offer a stable rollback point only for a retained, stopped job."""
+        if not self.recovery_active or not self.job:
+            return None
+        if self.rehome_checkpoint:
+            return self.rehome_checkpoint
+        if self.execution_checkpoint:
+            return self.execution_checkpoint
+        if self.data['phase'] not in {'error', 'interrupted'}:
+            return None
+        if self.pause_return is not None:
+            return None
+        if self._rehome_candidate is None:
+            self._rehome_candidate = RecoveryPlanner(self.job).from_report(
+                self.recovery_report or self.controller,
+                self.accepted, self.pending, self.confirmed_pens,
+            ) or False
+        return self._rehome_candidate or None
+
+    def record_execution(self, next_index, state):
+        """Persist an actually idle pen-up boundary, never just an ACK."""
+        point = RecoveryPlanner(self.job).checkpoint(
+            next_index, self.confirmed_pens,
+        )
+        self.check_position(state, point['position'])
+        self.execution_checkpoint = point
+        self.rehome_checkpoint = None
+        self.recovery_report = None
+        self._rehome_candidate = None
+        self.save_journal()
+
+    @staticmethod
+    def check_position(state, expected):
+        if (state['state'] != 'Idle' or state['offset'] is None
+                or any(abs(value) > .01 for value in state['offset'])
+                or any(abs(a - b) > .02 for a, b in
+                       zip(state['position'], expected))):
+            raise ValueError('The expected drawing position could not be verified.')
+
     def load(self, text, name='drawing.gcode'):
-        job = parse_job(text, name)
         with self.mutex:
+            job = parse_job(text, name, self.catalogue.collection(), self.profile)
             if self.thread and self.thread.is_alive(): raise ValueError('Finish or cancel the current operation first.')
             if self.recovery_active:
                 raise ValueError('Resume or discard the saved plot before loading another drawing.')
             self.job = job
             self.job_text = text
+            self.execution_checkpoint = self.rehome_checkpoint = None
+            self.recovery_report = self._rehome_candidate = None
             self.started = None
             self.data.update(total=len(job['commands']), accepted=0, remaining=None, elapsed=0, pending_pen=None)
             self.update('ready' if self.s else 'offline', 'File checked. Review the preview before starting.')
         return job_info(job)
+
+    def change_profile(self, action, item, revision):
+        """Never let configuration edits reinterpret a connected or saved job."""
+        with self.mutex:
+            if self.s or self.data['connected']:
+                raise ValueError('Disconnect the plotter before changing profiles.')
+            if self.recovery_active:
+                raise ValueError('Resume or discard saved recovery before changing profiles.')
+            if self.thread and self.thread.is_alive():
+                raise ValueError('Finish the current operation before changing profiles.')
+            previous = self.profile.fingerprint
+            result = self.profiles.change(action, item, revision)
+            self.profile = self.profiles.active
+            if previous != self.profile.fingerprint:
+                self.job = self.job_text = None
+                self.identity = self.controller = None
+                self.execution_checkpoint = self.rehome_checkpoint = None
+                self.data.update(homed=False, total=0, accepted=0, pending_pen=None)
+                self.update('offline', 'Plotter selected. Prepare the drawing for this profile before connecting.')
+            return result
 
     def launch(self, phase, function, *args):
         with self.mutex:
@@ -434,7 +553,7 @@ class Plotter:
             if time.monotonic() > end: raise LinkError('The plotter did not acknowledge a command.')
         return '\n'.join(lines)
 
-    def wait_idle(self, timeout=120, controls=True, abort=False):
+    def wait_idle(self, timeout=120, controls=True, abort=False, poll_interval=.1):
         end = time.monotonic()+timeout
         while time.monotonic() < end:
             if abort and self.cancel.is_set(): raise Cancelled()
@@ -444,7 +563,7 @@ class Plotter:
             state = self.status()
             if state['state'] == 'Idle' and self.wco is not None: return state
             if state['state'] == 'Alarm': raise ValueError('Clear the machine alarm locally before continuing.')
-            time.sleep(.1)
+            time.sleep(poll_interval)
         raise LinkError('The plotter did not finish its queued movement.')
 
     def open_device(self, recovery=False):
@@ -459,14 +578,15 @@ class Plotter:
         if recovery and 'Grbl' in initial: self.reset_seen = True
         if not recovery:
             # The connected unit must identify the same controller family as the verified T-A4.
-            if 'DrawCore' not in initial:
-                raise ValueError('The connected device did not identify itself as the calibrated DrawCore plotter.')
+            if self.profile.data['banner'] not in initial:
+                raise ValueError('The controller greeting does not match the selected plotter profile.')
         self.data['connected'] = True
 
     def connect(self, port):
+        self.profile.require_connection()
         if self.s: raise ValueError('Already connected.')
         choices = [p for p in self.ports() if p['port'] == port]
-        if len(choices) != 1: raise ValueError('Choose an available T-A4 USB port.')
+        if len(choices) != 1: raise ValueError('Choose an available USB port for the selected plotter.')
         self.identity = choices[0]['identity']
         self.acquire()
         self.open_device()
@@ -493,17 +613,16 @@ class Plotter:
         self.update('pausing', 'Finishing queued movement before parking…')
         state = self.wait_idle(controls=False, abort=True)
         if (state['offset'] is None or any(abs(v) > .01 for v in state['offset'])
-                or not (0 <= state['position'][0] <= 210
-                        and -297 <= state['position'][1] <= 0)
-                or min(abs(state['position'][2] - z) for z in (.5, 5)) > .02):
+                or not self.profile.contains(*state['position'][:2])
+                or min(abs(state['position'][2] - z) for z in (self.profile.data['pen_up'], self.profile.data['pen_down'])) > .02):
             raise ValueError('Cannot verify the drawing position before parking.')
         self.check_modes(controls=False)
         self.pause_return = list(state['position'])
         # No job command remains unacknowledged or queued at this boundary.
         self.pending = self.accepted
         self.save_journal()
-        self.pause_move('G90 G1 Z0.5 F1200')
-        self.check_home(self.pause_move('G90 G1 X0 Y0 F2400'))
+        self.pause_move(self.profile.lift())
+        self.check_home(self.pause_move(f"G90 G1 X0 Y0 F{self.profile.data['travel_feed']:.12g}"))
         self.update('paused', 'Paused at the top-left with the pen raised. '
                     'Keep the paper and pen unchanged; Continue returns to the drawing.')
         while self.pause.is_set():
@@ -517,35 +636,34 @@ class Plotter:
         self.check_modes(controls=False)
         self.update('resuming', 'Returning to the saved drawing position with the pen raised…')
         x, y, z = self.pause_return
-        self.pause_move(f'G90 G1 X{x:.4f} Y{y:.4f} F2400')
-        target_z = 5 if abs(z - 5) < .02 else .5
-        state = self.pause_move(f'G90 G1 Z{target_z:g} F1200')
+        self.pause_move(self.profile.move(x, y))
+        target_z = self.profile.data['pen_down'] if abs(z - self.profile.data['pen_down']) < .02 else self.profile.data['pen_up']
+        state = self.pause_move(f"G90 G1 Z{target_z:.12g} F{self.profile.data['lift_feed']:.12g}")
         if any(abs(a - b) > .02 for a, b in zip(state['position'], self.pause_return)):
             raise ValueError('Could not verify the saved drawing position.')
         self.pause_return = None
         self.update('plotting', 'Drawing position restored. Continuing the current drawing.')
 
-    def home(self):
+    def home(self, allow_cancel=False):
         if not self.s: raise ValueError('Connect the plotter first.')
         if self.status()['state'] != 'Idle': raise ValueError('The plotter must be idle before homing. Clear any alarm locally.')
         self.wco = None
         status = self.wait_idle(controls=False)
         if any(abs(v) > .01 for v in status['offset']): raise ValueError('This profile requires zero work offset. Machine settings were not changed.')
-        self.check_modes()
-        self.normal('G21', controls=False)
-        self.normal('G90 G1 Z0.5 F1200', controls=False)
-        self.wait_idle(controls=False)
-        self.normal('$H', timeout=90, controls=False)
-        self.wait_idle(controls=False)
-        self.normal('G90 G1 Z0.5 F1200', controls=False)
-        status = self.wait_idle(controls=False)
+        self.check_modes(controls=allow_cancel)
+        self.normal('G21', controls=allow_cancel)
+        self.normal(self.profile.lift(), controls=allow_cancel)
+        self.wait_idle(controls=False, abort=allow_cancel)
+        self.normal('$H', timeout=90, controls=allow_cancel)
+        self.wait_idle(controls=False, abort=allow_cancel)
+        self.normal(self.profile.lift(), controls=allow_cancel)
+        status = self.wait_idle(controls=False, abort=allow_cancel)
         self.check_home(status)
         self.reset_seen = False
         self.update('ready', 'Homed at the top-left with the pen raised.', homed=True)
 
-    @staticmethod
-    def check_home(state):
-        if state['state'] != 'Idle' or state['offset'] is None or any(abs(v) > .01 for v in state['position'][:2]+tuple(state['offset'])) or abs(state['position'][2]-.5) > .02:
+    def check_home(self, state):
+        if state['state'] != 'Idle' or state['offset'] is None or any(abs(v) > .01 for v in state['position'][:2]+tuple(state['offset'])) or abs(state['position'][2]-self.profile.data['pen_up']) > .02:
             raise ValueError('Expected home X0 Y0, pen raised and zero work offset.')
 
     def check_modes(self, controls=True):
@@ -582,7 +700,7 @@ class Plotter:
         if any(abs(v) > .01 for v in state['offset']): raise ValueError('The work offset changed.')
         if external_home:
             self.normal('G21')
-            self.normal('G90 G1 Z0.5 F1200')
+            self.normal(self.profile.lift())
             state = self.wait_idle()
         self.check_home(state)
         self.reset_seen = self.uncertain_write = False
@@ -590,7 +708,10 @@ class Plotter:
         self.started = time.monotonic()
         self.recovery_active = True
         self.confirmed_pens = set()
+        self.execution_checkpoint = self.rehome_checkpoint = None
+        self.recovery_report = self._rehome_candidate = None
         self.update('plotting', 'Drawing started.', accepted=0, total=len(self.job['commands']), attempt=0)
+        self.record_execution(0, state)
         self.run_commands(0)
 
     def run_commands(self, index):
@@ -602,7 +723,7 @@ class Plotter:
                 if index in checkpoints and index not in confirmed:
                     self.change_pen(checkpoints[index])
                     confirmed.add(index)
-                    self.save_journal()
+                    self.record_execution(index, self.controller)
                 self.controls()
                 self.pending = index
                 self.normal(self.job['commands'][index], job_command=True)
@@ -611,6 +732,12 @@ class Plotter:
                 with self.mutex:
                     self.data['accepted'] = index
                     self.data['remaining'] = max(0, round(self.job['seconds']-self.job['times'][index-1]))
+                if (index > 1 and self.job['endpoints'][index - 1][2] == self.profile.data['pen_up']
+                        and self.job['endpoints'][index - 2][2] == self.profile.data['pen_down']):
+                    stopped = self.wait_idle(
+                        controls=False, abort=True, poll_interval=.02,
+                    )
+                    self.record_execution(index, stopped)
                 if time.monotonic()-last_poll >= 1:
                     self.status()
                     last_poll = time.monotonic()
@@ -623,6 +750,7 @@ class Plotter:
             if self.recover(exc) != len(self.job['commands']): raise ValueError('Completion is uncertain.')
             final = self.controller
         self.check_home(final)
+        self.record_execution(len(self.job['commands']), final)
         self.recovery_active = False
         self.update('completed', 'Completed: home reached and pen raised.', homed=True, elapsed=round(time.monotonic()-self.started))
         self.started = None
@@ -658,6 +786,8 @@ class Plotter:
         self.run_commands(index)
 
     def recover(self, error):
+        self.recovery_report = copy.deepcopy(self.controller)
+        self._rehome_candidate = None
         self.update('reconnecting', 'Connection lost. Checking progress before continuing.', homed=False)
         last = str(error)
         for attempt in range(1, 4):
@@ -686,6 +816,72 @@ class Plotter:
                 self.update(message='Cannot continue yet: '+last)
         raise ValueError('Stopped after three reconnection attempts. '+last+' The drawing has not been restarted.')
 
+    def rehome_saved(self, point):
+        """Explicitly re-register after a reset, then wait for the correct pen."""
+        # Keep this point through a crash or USB loss during auxiliary moves.
+        self.rehome_checkpoint = copy.deepcopy(point)
+        self.save_journal()
+        self.acquire()
+        self.open_device(recovery=True)
+        self.update('rehome', 'Clearing queued movement before recovery. '
+                    'Keep the pen removed or lifted clear of the paper.')
+        if self.cancel.is_set():
+            raise Cancelled()
+        self.write(b'!')
+        self.write(b'\x18')
+        time.sleep(self.settle)
+        try:
+            banner = self.s.read(8192).decode('ascii', errors='replace')
+        except OSError as exc:
+            raise LinkError(str(exc)) from exc
+        self.rx, self.acks, self.wco = b'', 0, None
+        if self.profile.data['banner'] not in banner:
+            raise ValueError('Recovery reset was not confirmed by the selected controller.')
+        self.reset_seen = True
+        state = self.status()
+        if state['state'] == 'Alarm':
+            self.normal('$X', controls=True)
+            state = self.status()
+        if state['state'] != 'Idle':
+            raise ValueError('The reset controller is not idle.')
+        settings = self.normal('$$')
+        if not {'$13=0', '$22=1'} <= set(settings.splitlines()):
+            raise ValueError('Recovery requires millimetre reports and homing enabled.')
+        self.update('rehome', 'Homing with the pen clear of the paper…')
+        self.home(allow_cancel=True)
+        self.update('rehome', 'Returning to the saved stroke with the pen raised…')
+        x, y, _ = point['position']
+        state = self.pause_move(self.profile.move(x, y))
+        self.check_position(state, point['position'])
+        details = RecoveryPlanner(self.job).describe(point)
+        self.pen_ready.clear()
+        self.update(
+            'recovery_pen',
+            'Position restored. Fit ' + details['pen_label'] +
+            ' at its original tip height, then confirm Continue. '
+            'The pen holder is raised; no drawing has resumed.',
+            pending_pen=dict(index=details['pen_index'],
+                             pen_label=details['pen_label'],
+                             colour=details['colour']),
+        )
+        while not self.pen_ready.wait(.1):
+            if self.cancel.is_set():
+                raise Cancelled()
+        if self.cancel.is_set():
+            raise Cancelled()
+        self.check_position(self.status(), point['position'])
+        self.check_modes()
+        index = point['next_index']
+        self.accepted = self.pending = index - 1
+        self.confirmed_pens = set(point['confirmed_pens'])
+        self.reset_seen = self.uncertain_write = False
+        self.pause_return = None
+        self.started = time.monotonic() - self.data.get('elapsed', 0)
+        self.update('plotting', 'Reconnected. Continuing the saved drawing with '
+                    + details['pen_label'] + '.', accepted=index, pending_pen=None)
+        self.record_execution(index, self.controller)
+        self.run_commands(index)
+
     def cancel_machine(self):
         self.update('cancelling', 'Stopping the drawing and clearing queued moves…', homed=False)
         if not self.s: raise ValueError('USB is unavailable.')
@@ -702,7 +898,7 @@ class Plotter:
         self.rx, self.acks, self.wco = b'', 0, None
         if self.status()['state'] == 'Idle':
             self.normal('G21', controls=False)
-            self.normal('G90 G1 Z0.5 F1200', controls=False)
+            self.normal(self.profile.lift(), controls=False)
             self.wait_idle(controls=False)
         if self.started: self.data['elapsed'] = round(time.monotonic()-self.started)
         self.started = None
@@ -712,8 +908,10 @@ class Plotter:
 
     def action(self, name, payload):
         with self.mutex:
+            if name in ('connect', 'home', 'start', 'resume', 'rehome'):
+                self.profile.require_connection()
             phase = self.data['phase']
-            if phase == 'pen_change' and name == 'continue':
+            if phase in {'pen_change', 'recovery_pen'} and name == 'continue':
                 pending = self.data.get('pending_pen')
                 if (payload.get('ready') is not True or not pending
                         or payload.get('job_id') != self.job['id']
@@ -721,18 +919,29 @@ class Plotter:
                     raise ValueError('Confirm the current pen is fitted before continuing.')
                 self.pen_ready.set()
                 return
-            if phase == 'pen_change' and name == 'pause':
+            if phase in {'pen_change', 'recovery_pen'} and name == 'pause':
                 raise ValueError('The plotter is already waiting for a pen.')
             if name in ('pause', 'continue', 'cancel'):
-                if phase not in {'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'pen_change', 'resuming'}:
+                if phase not in {'plotting', 'pausing', 'paused', 'reconnecting', 'finishing', 'pen_change', 'resuming', 'rehome', 'recovery_pen'}:
                     raise ValueError('There is no active drawing to control.')
-                if name == 'pause': self.pause.set()
+                if name == 'pause':
+                    if phase == 'rehome':
+                        raise ValueError('Wait for recovery to finish homing.')
+                    self.pause.set()
                 elif name == 'continue':
                     if phase != 'paused': raise ValueError('Wait for the plotter to pause fully.')
                     self.pause.clear()
                 else: self.cancel.set()
                 return
-            if name == 'resume':
+            if name == 'rehome':
+                point = self.rehome_point()
+                if (point is None or self.s or not self.job
+                        or payload.get('job_id') != self.job['id']
+                        or payload.get('rehome_ready') is not True):
+                    raise ValueError('Confirm the paper has not moved and the '
+                                     'pen is clear before homing this saved job.')
+                self.launch('rehome', self.rehome_saved, copy.deepcopy(point))
+            elif name == 'resume':
                 if (not self.snapshot()['recovery_available'] or self.s
                         or payload.get('ready') is not True
                         or payload.get('job_id') != self.job['id']):
@@ -749,7 +958,7 @@ class Plotter:
                             'and Home before starting a new drawing.', pending_pen=None)
             elif name == 'connect':
                 if self.recovery_active:
-                    raise ValueError('Use Resume saved plot or discard it before connecting.')
+                    raise ValueError('Use Reconnect and resume or Recover after reset for the saved plot.')
                 if self.s: raise ValueError('Already connected.')
                 self.launch('connecting', self.connect, payload.get('port'))
             elif name == 'home':
