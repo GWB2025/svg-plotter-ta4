@@ -2,6 +2,19 @@
 
 ## Status
 
+Current application: **1.7.0 pre-release**. The standard `.pkg` installer was
+added on 29 October 2026 for the existing app bundle; its creation does not
+change the application version. It targets Applications and includes Python
+and the app's dependencies. See [installer validation](VALIDATION_INSTALLER_1.7.0.md).
+
+No GitHub Releases are published as of 29 October 2026. The existing app ZIP
+and Installer ZIP were supplied separately. Source commits, Actions build
+artifacts and published release downloads are separate steps; pushing to
+`main` runs regression checks and deploys the launch page, but does not build
+or publish a Mac release.
+
+## Application changes by version
+
 Version 1.7.0 adds persistent machine profiles, a profile editor, configurable
 GRBL Z-lift controls and prepared SVG export for other controller types.
 The T-A4 remains the default. See `VALIDATION_1.7.0.md`.
@@ -76,8 +89,9 @@ pywebview 6.2.1. This local Python build requires macOS 15 or later.
 The packaged resource smoke check and ad-hoc signature check
 passed. Disk-image creation is unavailable in the restricted build environment;
 use the ZIP build there. No Apple-notarised public installer has been published.
-Full native-window and physical USB checks of 1.3.1 remain required before
-calling it a stable release. The release is labelled pre-release meanwhile.
+Full native-window, physical USB and installer-upgrade checks of 1.7.0 remain
+outstanding. The release is labelled pre-release meanwhile. Earlier validation
+reports retain the results and limitations of their named versions.
 
 ## Build locally
 
@@ -87,7 +101,7 @@ On a Mac with Python 3.12 or newer, from the repository root:
 python3 -m venv .venv-macos
 .venv-macos/bin/python -m pip install -r requirements-macos.txt
 .venv-macos/bin/python -m unittest discover -s tests -v
-node --test tests/conversion.cjs
+node --test tests/*.cjs
 .venv-macos/bin/python packaging/build_macos.py
 "dist/SVG Plotter.app/Contents/MacOS/SVG Plotter" --smoke-test
 ```
@@ -108,11 +122,57 @@ The **Build Mac application** GitHub Actions workflow runs manually or on a `v*`
 tag and uploads ZIPs and DMGs as build artifacts. It does not publish a GitHub Release.
 The workflow uses separate Apple silicon and Intel runners and executes the
 bundled resource smoke check. Download artifacts from the workflow run to test.
+The workflow currently builds the application ZIP and DMG only. Build the PKG
+separately using the command below. Both output directories (`build/` and
+`dist/`) are ignored by Git; commit the source, tests and documentation, and
+attach verified binaries to a release when publishing them.
+
+## Build the PKG installer
+
+The standard macOS installer uses the existing app bundle unchanged, in the
+same way as the ASCII-City Capture installer. After building the app:
+
+```sh
+.venv-macos/bin/python -m unittest discover -s tests -p test_macos_installer.py -v
+.venv-macos/bin/python packaging/build_installer.py \
+  --app 'dist/SVG Plotter.app' \
+  --output dist/SVG-Plotter-1.7.0-macOS-arm64-Installer.pkg
+```
+
+The builder creates a `.pkg` and a matching Installer ZIP containing the package,
+instructions, validation results and reproducible installer source. It derives
+the version from the bundle and the architecture and minimum macOS version from
+its native binaries, including the bundled Python runtime. The current local
+1.7.0 build requires Apple silicon and macOS 15.0 or later.
+Use the matching architecture and app version in the output filename when
+building a different bundle. The installer source uses only the Python standard
+library; `pkgbuild`, `productbuild`, `pkgutil`, `codesign`, `lipo` and `otool`
+must be available on the development Mac. No Python installation is required
+on the recipient's Mac.
+
+Installation targets `/Applications/SVG Plotter.app` in the system domain, uses
+strict bundle identity and version checks, and replaces the old bundle rather
+than leaving obsolete files behind. It contains no installation scripts and
+does not write to user settings. Finish or cancel any drawing and quit the app
+before installing. The installer does not terminate running applications.
+
+Verification expands the complete package, compares every file and symbolic
+link with the source app, verifies its code signature, runs its resource smoke
+test and checks the package destination, upgrade policy and requirements.
+This does not install the application or test physical hardware. The generated
+package is unsigned and unnotarised; app signing and installer signing are
+separate. See `VALIDATION_INSTALLER_1.7.0.md` for this build's results.
 
 ## Check before publishing
 
-- On a clean Mac without Python installed, drag the app into Applications and
-  launch it from Finder. Verify the page, theme controls and file picker.
+- On a clean Mac without Python installed, run the PKG and confirm its welcome,
+  authorisation and completion screens. Launch the app from Applications.
+  Test the separate application ZIP/DMG copy instructions as well.
+- Upgrade an older idle app, check that obsolete bundle files are replaced,
+  and confirm that stock, themes, profiles, fonts and drafts remain available.
+  Check that a newer installed bundle is not downgraded. The installer does
+  not close a running app; its instructions require quitting first.
+- Verify the page, theme controls and file picker.
 - Load a local SVG; check A5/A6, envelopes, custom dimensions, layered fills,
   pen selection and saving G-code via the native download prompt.
 - Verify startup errors are visible and a second sender cannot bind port 8769.
@@ -122,6 +182,9 @@ bundled resource smoke check. Download artifacts from the workflow run to test.
 - Quit while idle, reopen and verify the port was released. Check recovery
   survives replacement of the app without automatically connecting or moving.
 - Test on both supported architectures and record tested macOS versions.
+- Select a custom profile while disconnected; check bed limits, page presets
+  and settings persistence. An SVG-export profile must reject USB connection
+  and export prepared paths for the target application's own workflow.
 
 No automatic updater is included. Show the version in the native window title;
 update by quitting the idle app and replacing it in Applications. Never replace
@@ -147,10 +210,19 @@ codesign --verify --deep --strict --verbose=2 "dist/SVG Plotter.app"
 spctl --assess --type execute --verbose=2 "dist/SVG Plotter.app"
 ```
 
+The PKG needs a separate **Developer ID Installer** certificate; app signing
+does not sign the package. Sign the final package with `productsign`, submit it
+to Apple's notarisation service, staple the accepted ticket and verify the
+result before distribution. Recreate any download ZIP and its checksums after
+signing or stapling changes the package. The installer builder itself does not
+perform these signing/notarisation steps.
+
 Use the Intel filename for that build. Inspect any rejected notarisation log,
-correct the cause and rebuild. Publish both verified DMGs in a GitHub Release
-with SHA-256 checksums, version and tested OS/hardware notes. Update the launch
-page with a download link only after the release exists.
+correct the cause and rebuild. Publish only verified architecture-specific
+artifacts in a GitHub Release, with SHA-256 checksums, version, minimum macOS,
+signing status and tested hardware notes. Check the uploaded downloads before
+adding direct download links to the README and launch page. Preserve earlier
+releases and label uncompleted physical validation as pre-release.
 
 For trusted unsigned test builds blocked by macOS, use System Settings → Privacy
 & Security → Open Anyway if offered. Do not advise disabling Gatekeeper.

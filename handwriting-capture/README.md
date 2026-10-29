@@ -2,6 +2,10 @@
 
 A small local app for capturing ordered handwriting strokes and exporting centre-line SVGs for the 2D Pen Plotter. Uses Python 3.10+ and Flask; the browser UI has no dependencies, build step, CDN or cloud connection.
 
+This is a separate source application, version 1.2. The SVG Plotter 1.7.0 Mac
+installer does not install it. Export a composed SVG here, then load that file
+in SVG Plotter. Handwriting samples stay in this app's own data folder.
+
 ## Run on this Mac
 
 Open Terminal and run:
@@ -29,7 +33,7 @@ The default listens only on this Mac. The Wi-Fi option exposes this unauthentica
 - **Practise:** draw an `a` against the guides; these marks are never sent to the server.
 - **Palm protection:** press **Lock page for writing** on either drawing page. This fits the pad and controls into the screen and blocks page scrolling, pinch zoom and bounce until you press **Unlock page** (or Escape). Leave finger drawing off for Pencil-only marks. Deliberate button taps still work; browser/OS edge gestures cannot be disabled by the app.
 - **Capture:** choose Lowercase, Capitals, Numbers or Punctuation, select a character, draw, then press **Save**. Mouse works for desktop testing. Finger drawing is off by default to reduce palm marks; enable it explicitly if needed. Pencil/pen detection means the browser reported `pointerType: pen`, not verified Apple hardware.
-- The baseline is the lower guide; x-height is the upper guide. Keep b/d ascenders above the upper guide.
+- The four guides mark cap height, x-height, baseline and descender depth. Keep b/d ascenders above x-height and g/j/p/q/y tails below the baseline.
 - Undo removes the last unsaved stroke. Clear clears the current unsaved drawing. Switching letters retains drafts until reload; only Save persists them. Browser reload warnings are best-effort, particularly on iPad: save before leaving.
 - Saving adds a new sample; it never replaces earlier raw samples. The counts show saved samples. Practice and capture are separate.
 - **Compose:** enter captured characters, spaces and line breaks (up to 120 characters), then Generate preview. Try `abcde bad cab`. Missing or unsupported letters produce a clear error.

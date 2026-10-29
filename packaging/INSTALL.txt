@@ -1,52 +1,72 @@
-SVG Plotter 1.6.0 — pre-release
+SVG Plotter 1.7.0 — pre-release
 
-New: Text & ASCII art. Open a .txt file with the normal file picker, or
-use the new tab to paste/edit text. Fixed-width pen strokes preserve spaces,
-columns and blank lines. Choose Prepare to plot, review the fitted preview and
-physical pen, then use the normal drawing controls. Save text keeps your edits.
+INSTALL OR UPDATE
 
-Ink stock. Add bottles, record RGB/HEX and paper/performance notes,
-then link each refillable pen to its current ink in Pen stock. Use Copy ink RGB
-to pen when needed. Export catalogue now includes inks, pens and themes.
-Existing catalogues are upgraded on save; older apps cannot read the new format.
-Keep an old-format export if you plan to downgrade.
+1. Save unsaved work. Finish or cancel an active drawing, then quit SVG Plotter.
+   A paused drawing is still active. Stop any Terminal-based sender as well.
+2. For an Installer ZIP: extract it, double-click the .pkg, then choose
+   Continue and Install. Enter your administrator password if requested.
+   For an application ZIP or DMG: copy SVG Plotter.app into Applications.
+   Eject a DMG after copying. GitHub's source ZIP is not an application bundle.
+3. Open Finder > Applications > SVG Plotter. Confirm version 1.7.0 in About.
+4. Choose Your plotter before connecting. Keep the supplied Writing Robot T-A4
+   profile for the original machine, refresh connections and select its USB port.
+5. Clear the bed and homing path, choose Home, then secure scrap paper and fit
+   the pen. Load a small test drawing, inspect the preview and confirm readiness.
 
-Materials guide. Browse and search the supplied pens, inks and papers
-comparison, with thanks to Dan Catt and links to his Pens & Paper lesson.
+Opening the app never connects or moves the plotter automatically. The installer
+does not close a running app. No Mac restart or separate Python download is needed.
 
-Pen stock > Pen colour swatches. Choose your Sharpie set or a single pen,
-then Prepare swatch sheet. Default patches are 20 x 20 mm. The plotter pauses
-for each labelled physical pen. Read the dry patches using the ColorReader phone
-app, then use Enter RGB to save each reading to its pen.
+REQUIREMENTS
 
-If a drawing is running in an older version, let it finish before quitting
-and replacing the app. Do not interrupt an active plot to install this update.
+The supplied Apple silicon (arm64/M-series) build requires macOS 15 or later.
+Intel (x86_64) builds require separate building and verification; this arm64
+installer is not for Intel Macs. The app is ad-hoc signed and the installer is
+unsigned; neither is Apple-notarised. If macOS blocks a trusted download, try
+opening it, then use System Settings > Privacy & Security > Open Anyway.
+Apple guidance: https://support.apple.com/en-gb/102445
 
-SVG Plotter — Mac installation
+VERSION 1.7.0
 
-1. Open the DMG, or double-click the ZIP to unpack it.
-2. Drag SVG Plotter into Applications, then open it from Applications.
-   If you used a DMG, eject the disk image after copying.
-3. Connect your T-A4 by USB. Select it and choose Connect.
-4. Clear the bed, choose Home, load a small test drawing and confirm readiness.
+Your plotter: add, duplicate, edit and select saved make/model profiles. Compatible
+GRBL Z-lift machines can use configurable bed dimensions, axis directions, pen
+heights, speeds and USB settings. New machines require a pen-clear calibration.
+Other controller types use SVG export: choose Save prepared SVG and open it in
+the machine's own software. The app does not directly control those protocols.
+Profile changes require disconnection and no retained recovery.
 
-Opening the application never connects or moves the plotter automatically.
-Finish or cancel a drawing before closing the app. Paused jobs remain active.
+Also included: SVG rotation and layered hatching, Text & ASCII art, postcard
+message/address layout, stroke fonts and private TrueType import, positioning
+guides, editable pen/ink stock, colour themes, labelled swatches, Materials guide,
+pen-change prompts, parked pauses and interrupted-plot recovery.
 
-Choose arm64 for Apple silicon (M-series), or x86_64 for an Intel Mac.
-The local Apple silicon test build requires macOS 15 or later.
-Test builds are not Apple-notarised. Only install a build from a source you trust.
-If macOS blocks a trusted test build, use System Settings > Privacy & Security
-and Open Anyway. Do not disable Gatekeeper.
+YOUR SAVED DATA
 
-Saved recovery records and logs:
-~/Library/Application Support/SVG Plotter/
+Native app settings and recovery remain outside the application bundle:
+  ~/Library/Application Support/SVG Plotter/
+Updating the app preserves stock, themes, profiles, imported fonts, saved
+postcard drafts and recovery records. Save edits before quitting. Catalogue
+export backs up pens, inks and themes; back up the entire folder while the app
+is closed to retain the other settings. Keep plotter-state.json and
+plotter-job.json together for an interrupted drawing.
 
-Before switching from the Terminal version, finish any drawing, disconnect
-and stop that server. Do not run two senders against the same USB plotter.
-Old logs are not migrated automatically. Complete or discard any old recovery
-in the old app before switching.
+Source launches use logs/ in the repository. Data is not migrated between source
+and native installations automatically. Complete or discard old recovery in its
+original sender before switching. Never run two senders against the same plotter.
+Catalogue format 2 (used since 1.5.0) imports format 1 backups; older apps cannot
+read format 2. The installer uses bundle version checks to prevent downgrades.
 
-The Postcard-trial folder contains exact-size scrap-paper checks. Read its
-READ-ME.md before plotting. Physical recovery and registration validation
-remain pending for this release.
+GUIDES AND VALIDATION
+
+The application ZIP/DMG includes Postcard-trial with scrap-paper checks. Installer
+ZIPs contain the package, READ-ME-FIRST.txt, VALIDATION.json and installer source.
+Installer policy, payload, signature and resource checks passed. A complete
+installation/upgrade and physical plotting trial remain unverified.
+
+User guide: https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/USER_GUIDE.md
+Build/installer guide: https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/MAC_RELEASE.md
+Physical trial: https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/PHYSICAL_TRIAL.md
+
+As of 29 October 2026, no GitHub Releases have been published. The current Mac
+builds were supplied separately; see the repository README for distribution status.
+Inspired by Rev Dan Catt's pen-plotting workflow; credits and licences are in About.

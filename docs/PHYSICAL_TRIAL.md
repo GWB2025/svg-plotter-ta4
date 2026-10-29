@@ -2,14 +2,20 @@
 
 Use scrap paper cut to 148 × 105 mm before trying a finished postcard.
 These steps require someone at the machine. No physical trial has been recorded
-for version 1.3.1 yet. Do not start by replacing a sender during a drawing.
+for version 1.7.0 yet. Do not start by replacing a sender during a drawing.
+This checklist uses the supplied T-A4 profile. A custom machine requires its
+own pen-clear calibration before drawing; adding a make/model name does not
+establish compatibility.
 
 ## Connection and a small drawing
 
 1. Save the current drawing and any postcard draft; finish or cancel an active
    job. Quit the old sender before opening the new app.
-2. Open About and confirm version 1.3.1. Refresh connections and connect the
-   Writing Robot T-A4. Confirm the bed and homing path are clear before Home.
+2. Install the update using the PKG or by copying the app into Applications.
+   Open About and confirm version 1.7.0. Check that existing stock, profiles,
+   fonts and saved drafts are retained. While disconnected, select the supplied
+   Writing Robot T-A4 profile, then refresh connections and connect the machine.
+   Confirm the bed and homing path are clear before Home.
 3. Load the small-star test. Confirm readiness and draw it on scrap paper.
 4. During a second trial, Pause. Check that the pen lifts and parks at the
    top-left. Continue should return pen-up and complete the drawing without
@@ -48,5 +54,6 @@ Use only a disposable test drawing and keep the paper and pen fixed.
 ## Record the result
 
 Record macOS and app version, connection outcome, measured square dimensions,
-pause/continue result, pen-change order and the recovery mode tested. Attach a
+installation method, settings preservation, selected profile, pause/continue
+result, pen-change order and the recovery mode tested. Attach a
 photo of the scrap card if registration or text needs adjusting.

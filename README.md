@@ -2,6 +2,10 @@
 
 An SVG plotting app maintained by Gordon Brindle, with saved profiles for different makes and models. The supplied Writing Robot T-A4 profile remains the default.
 
+Current app version: **1.7.0 pre-release**. A standard macOS `.pkg` installer
+now places the existing Apple silicon app in Applications and preserves saved
+settings. See [installation](#install-the-mac-application-recommended).
+
 Version 1.7.0 adds **Your plotter**: add, duplicate, edit and select persistent
 plotter profiles, with bed dimensions and configurable GRBL Z-lift controls.
 Other controller types can use **SVG export** and **Save prepared SVG** with their
@@ -43,13 +47,13 @@ G-code share the same rotation. See [landscape artwork](docs/USER_GUIDE.md#rotat
 
 Version 1.3.1 consolidates the Mac application, recovery, pen catalogue, page guides and postcard features with the October connection fixes. The source launcher detects an older running sender instead of silently reusing it. The repository also includes [Handwriting Capture 1.2](handwriting-capture/README.md), supporting the full alphabet, digits and punctuation.
 
-The 1.5.0 build is a **pre-release** while the [physical T-A4 and postcard trial](docs/PHYSICAL_TRIAL.md) is completed. Automated tests do not establish physical registration or colour measurement accuracy. See [swatch validation](docs/VALIDATION_1.4.0.md), [rotation validation](docs/VALIDATION_1.3.2.md) and [earlier validation](docs/VALIDATION_1.3.1.md).
+The 1.7.0 build remains a **pre-release** pending the [physical T-A4 and postcard trial](docs/PHYSICAL_TRIAL.md). Automated tests do not establish physical registration, colour measurement accuracy or compatibility with a particular custom machine. See [app validation](docs/VALIDATION_1.7.0.md) and [installer validation](docs/VALIDATION_INSTALLER_1.7.0.md). Earlier validation reports describe their named releases.
 
 Version 1.3.0 adds **Import fonts…** to Postcard text. Choose `.ttf` files, then use them in either Font menu. Imported outline fonts are saved privately on this Mac and survive app updates; bundled Hershey fonts remain single-line choices.
 
 Version 1.2.0 adds **Postcard text**: write a message and postal address, choose
 stroke fonts, adjust size/spacing/placement, save a draft and prepare exact-size
-pen paths. See [writing postcards](docs/USER_GUIDE.md#postcard-text-version-120).
+pen paths. See [writing postcards](docs/USER_GUIDE.md#postcard-text-version-130).
 
 Version 1.1.1 adds **Stock positioning guides** for every page preset and custom
 size: exact corner, edge-centre and centre marks, ready to plot or save as SVG.
@@ -65,16 +69,30 @@ updates, and saved drawings retain their original pen details. See the
 
 ## Install the Mac application (recommended)
 
-The repository includes a native Mac application and a two-architecture build
-workflow. See [Releases](https://github.com/GWB2025/svg-plotter-ta4/releases) for
-versioned downloads. The Apple silicon 1.5.0 pre-release ZIP requires macOS 15
-or newer and is not Apple-notarised. Intel builds require separate verification.
+The repository includes the source and a two-architecture Mac build workflow.
+As of 29 October 2026, no downloads have been published in
+[GitHub Releases](https://github.com/GWB2025/svg-plotter-ta4/releases).
+The 1.7.0 Apple silicon app and Installer ZIP have been supplied separately;
+use the instructions below if you have that download, or follow the
+[build instructions](docs/MAC_RELEASE.md#build-locally). GitHub's **Code →
+Download ZIP** contains source code, not the ready-to-run app.
 
-For a ZIP, extract it and drag **SVG Plotter** into **Applications** after
+The supplied Apple silicon build requires **macOS 15 or later**. The app is
+ad-hoc signed and the installer is unsigned; neither is Apple-notarised.
+Intel builds require separate verification.
+
+For the **Installer ZIP**, extract it, finish or cancel any drawing and quit
+SVG Plotter. Open the enclosed `.pkg`, choose **Continue**, then **Install**.
+Enter your administrator password if requested, then open **Applications →
+SVG Plotter**. The installer upgrades `/Applications/SVG Plotter.app`; saved
+settings remain in your existing Application Support folder. Python and all
+dependencies are included. See [building the installer](docs/MAC_RELEASE.md#build-the-pkg-installer).
+
+For an **application ZIP**, extract it and drag **SVG Plotter** into **Applications** after
 quitting the old app. Saved settings and recovery stay outside the app bundle.
 For a DMG:
 
-1. Download the DMG for **Apple silicon (arm64)** or **Intel (x86_64)**.
+1. Use a DMG built for **Apple silicon (arm64)** or **Intel (x86_64)**.
 2. Open it and drag **SVG Plotter** into **Applications**.
 3. Eject the DMG, then double-click **SVG Plotter** in Applications.
 
@@ -112,12 +130,17 @@ Opening the app does not connect to USB or start movement. Select the device, co
 
 ## Features
 
-- SVG outline preview, A4 placement and optional G-code download.
+- SVG outline preview, actual-size or fitted placement and G-code download.
+- Saved GRBL Z-lift plotter profiles and prepared SVG export for other controllers.
 - Curves, basic shapes, affine group transforms and separate pen strokes.
 - Colour passes with a parked, confirmed pen change between colours.
-- Editable pen stock, colour themes, backups and Micron/Sharpie pen assignments.
-- A4/A5/A6, postcard, envelope and custom sizes with positioning guides.
+- Editable pen and ink stock, measured RGB/HEX colours and catalogue backups.
+- 53 supplied pens and 15 supplied theme adaptations, plus personal entries.
+- A3/A4/A5/A6, postcards, envelopes and custom sizes within the selected bed.
+- Exact-size stock positioning guides and labelled pen colour swatch sheets.
 - Postcard message/address layout and private TrueType font import.
+- Text-file and ASCII-art plotting with fixed-width stroke lettering.
+- An offline Materials guide credited to Dan Catt.
 - Optional visible-layer hatching and responsive pen-path previews.
 - Built-in test drawings and pause, continue and cancel controls.
 
@@ -127,13 +150,21 @@ Outline mode follows SVG paths; Layered colour fills creates hatching for suppor
 
 This independent project is inspired by **Rev Dan Catt** and his explanations of pen plotting, handwriting capture and creative tools. Our design reference is [Dan’s YouTube video](https://youtu.be/nD3XlqFhcEI). Thank you, Dan, for sharing your process and ideas.
 
-The colour-theme names and reference swatches credit **Studio Yorktown**: [Color Town Hall](https://studioyorktown.github.io/coloryorktownhall/). Physical pen mappings are adaptations for the available Micron pens, not exact ink matches.
+Nine supplied theme references credit **Studio Yorktown**: [Color Town Hall](https://studioyorktown.github.io/coloryorktownhall/). Six further combinations use the Sharpie Glam Pop collection. Physical pen mappings and screen swatches are approximations, not exact ink matches.
 
 This is Gordon’s independent implementation and is not an official product of, or endorsed by, Dan or Studio Yorktown. Dan’s videos, transcripts, screenshots and postcard artwork are not included in this repository. Acknowledgement does not grant a licence to third-party material.
 
 ## Licence
 
-The project’s original software is available under the [MIT licence](LICENSE), copyright © 2026 Gordon Brindle. Preserve copyright and licence notices when redistributing it. Third-party works, names and palette references remain subject to their respective rights; the MIT licence does not relicense those works. Flask and pyserial retain their own licences.
+The project’s original software is available under the [MIT licence](LICENSE), copyright © 2026 Gordon Brindle. Preserve copyright and licence notices when redistributing it. Third-party works, names and palette references remain subject to their respective rights; the MIT licence does not relicense those works. Flask, pyserial, pywebview, PyObjC and other bundled dependencies retain their own licences. See the [Hershey font notices](docs/FONT_LICENCES.txt) and [OpenType.js notice](docs/OPENTYPE_LICENSE.txt).
+
+## Documentation
+
+- [User guide](docs/USER_GUIDE.md): installation, plotting, profiles and saved data.
+- [Mac releases](docs/MAC_RELEASE.md): app and installer builds, signing and publishing.
+- [Physical trial](docs/PHYSICAL_TRIAL.md): T-A4, postcard and recovery checks.
+- [App validation](docs/VALIDATION_1.7.0.md) and [installer validation](docs/VALIDATION_INSTALLER_1.7.0.md): completed checks and remaining limitations.
+- [Handwriting Capture 1.2](handwriting-capture/README.md): the separate capture app; it is not included in SVG Plotter's native bundle.
 
 ## Development and checks
 
@@ -142,7 +173,12 @@ node --test tests/*.cjs
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-The automated sender tests use a simulated controller. They do not move hardware. Native browser geometry checks are available in `tests/browser.html`.
+The automated sender tests use a simulated controller. They do not move hardware.
+Installer policy tests run in the Python suite; building and extracting a real
+package requires macOS and Apple's command-line tools. Native browser geometry
+checks are available in `tests/browser.html`. The separate handwriting app has
+its own Python and JavaScript suites; the `Test plotter and handwriting`
+workflow runs both projects on pushes to `main` and pull requests.
 
 ## GitHub Pages
 
@@ -216,7 +252,8 @@ physical USB disconnection and repeated-homing tests are still required.
 ## Park when paused
 
 **Pause** finishes the movement already in the controller's queue, records the
-actual stopping position, lifts to Z0.5 and parks at X0 Y0. The display says
+actual stopping position, lifts to the profile's pen-up height (Z0.5 for the
+supplied T-A4) and parks at X0 Y0. The display says
 **Pausing** until the park is verified. This is a controlled return to the top-left;
 it does not run another homing cycle or change the drawing registration.
 
@@ -229,14 +266,13 @@ recovery is blocked because the physical resume point is uncertain.
 
 ## Expanded pen inventory
 
-The selectors now offer 29 pens: the existing 19 Pigma Microns, seven Stabilo
-Point 88 fine 0.4 mm pens (red 88/40, blue 88/41, green 88/43, yellow 88/44,
-orange 88/54, purple 88/55 and pink 88/56), and three Uni-ball Eye UB-157E
-0.7 mm fine pens (black, blue and red). References are recorded as supplied
-in Pens.txt. Existing Micron pen IDs and default selections are preserved;
-the additional families can be selected for any colour pass. Pen labels and
-saved jobs retain the brand, size and reference. Changing pens does not adjust
-hatch spacing, pen height or machine settings automatically.
+The supplied catalogue contains **53 pens**: 19 Pigma Microns, 24 Sharpie Glam
+Pop Fine Point pens, seven Stabilo Point 88 fine 0.4 mm pens and three Uni-ball
+Eye UB-157E 0.7 mm pens. The 15 supplied theme adaptations comprise nine based on
+Studio Yorktown palettes and six Sharpie Glam Pop combinations. Personal stock
+and themes can be added, edited and backed up in the app. Ink swatches are
+approximate until measured; changing a pen does not adjust hatch spacing, pen
+height or machine settings automatically.
 
 
 ### Layered SVG artwork

@@ -1,16 +1,44 @@
-# SVG Plotter for Writing Robot T-A4
+# SVG Plotter user guide
 
-Local Mac interface: load an SVG or plain text, inspect its pen-path preview, then send it
-over USB using the previously verified Handwriting Studio sender.
+For **version 1.7.0**, including the Mac installer. Load SVG artwork or plain
+text, inspect the pen-path preview, then plot using a compatible GRBL Z-lift
+profile or export prepared SVG for the machine's own software. The supplied
+Writing Robot T-A4 profile is the default.
 
-Double-click **Start-SVG-Plotter.command**. The window opens at
-http://127.0.0.1:8769/. The launcher can reuse the Python environment on the
-EXTRA Apps drive. Opening the app or loading a drawing does not connect to USB.
+## Install and open the Mac app
+
+The supplied Apple silicon build requires macOS 15 or later. Python and its
+dependencies are included; no Terminal setup is needed.
+
+1. Finish or cancel any active drawing, save unsaved edits and quit SVG Plotter.
+   A paused drawing is still active. Stop any source-based sender as well.
+2. Extract the **Installer ZIP**, open the included `.pkg`, then choose
+   **Continue → Install**. Enter your administrator password if requested.
+3. Open **Finder → Applications → SVG Plotter**. The title and About panel
+   should show **1.7.0**.
+
+The installer upgrades `/Applications/SVG Plotter.app` without writing to your
+saved settings. For an application ZIP or DMG, copy the app to Applications
+after quitting the old version. The installer is unsigned and the app is ad-hoc
+signed; neither is Apple-notarised. If macOS blocks your trusted download,
+try opening it, then use **System Settings → Privacy & Security → Open Anyway**.
+See [Apple's guidance](https://support.apple.com/en-gb/102445).
+
+GitHub's **Code → Download ZIP** contains source, not an installed app. See the
+[README](../README.md#install-the-mac-application-recommended) for download
+status and the [Mac build guide](MAC_RELEASE.md) to build a package yourself.
+Source users follow [the setup below](#launching-from-source).
+
+## First drawing
+
+Opening the app or loading a drawing does not connect to USB or move the pen.
 
 1. Choose an SVG, or select a built-in **Test drawing** and press **Load test SVG**. Its paths appear on the A4 preview. Test drawings load at original size; choosing one does not connect or start the robot.
 2. Choose **Fit drawing to page**, with adjustable margins, or **Keep original
    size and position**. Placement changes update the preview and clear readiness.
-3. Connect the T-A4 by USB, refresh connections and choose **Connect**.
+3. Select **Your plotter** before connecting. For the T-A4, keep its supplied
+   profile, attach USB, refresh connections and choose **Connect**. Other
+   profiles have [specific requirements](#plotter-profiles-version-170).
 4. Clear the bed for homing, choose **Home**, then secure paper and prepare the pen.
 5. Check the readiness box and choose **Start drawing**.
 6. Use Pause / Continue / Cancel as required. Keep the Mac awake.
@@ -189,43 +217,73 @@ transforms, lines, rectangles, circles, ellipses, polylines and polygons.
 Coordinates use SVG page dimensions and viewBox scaling. Unitless SVG dimensions
 are interpreted as CSS pixels at 96 pixels per inch.
 
-All visible geometry is plotted as outlines, including filled-only shapes.
-Solid fills are not shaded. Convert text and clones to paths before import.
+In **Outline paths** mode, visible geometry is plotted as outlines, including
+filled-only shapes. Choose **Layered colour fills** for hatched solid artwork;
+see [layered artwork](#layered-svg-artwork). Convert SVG text and clones to paths
+before import. The Text & ASCII art and Postcard text editors create paths.
 Images, CSS stylesheets, nested SVG viewports, clipping, masks, markers and effects
 are rejected rather than approximated. Hidden shapes are omitted.
 Curves are sampled into line segments. SVG limit: 8 MB and 250,000 sampled points.
 
-Verified machine profile: A4 portrait, home top-left, +X right, negative Y down,
+The supplied T-A4 profile uses A4 portrait, home top-left, +X right, negative Y down,
 pen up Z0.5, down Z5, 115200 baud, DTR/RTS false. Drawing speed is 900 mm/min;
-travel is 2400 mm/min. These are intentionally fixed to the tested sender profile.
-Only matching USB devices are offered; one sender owns the connection at a time.
-Do not run another plotting application against the same robot.
+travel is 2400 mm/min. Keep these settings for the original machine. Other
+machines use saved profiles; their bed, directions, pen heights, speeds and
+USB filtering are configurable. Only one sender owns the connection at a time.
+Do not run another plotting application against the same robot. Physical
+validation of the current release remains outstanding.
 
-## First-time setup if the existing environment is unavailable
+### Layered SVG artwork
 
-In Terminal, from this directory:
+Choose **Layered colour fills** under SVG treatment for opaque, solid-colour
+artwork. Shapes are composited in SVG paint order before hatching, so hidden
+areas are not drawn. White and very pale regions (all RGB channels at least 235
+by default) remain bare paper while still covering lower shapes. Untick the
+bare-paper option when using a pale pen.
+
+Hatch spacing is measured after page placement and ranges from 0.2 to 3 mm,
+with 0.5 mm as the default. The artwork is sampled on a 0.1 mm grid, so fine
+detail may disappear. Fills and visible strokes are hatched; use **Outline
+paths** for single-line or already-hatched drawings. The separate pen-swatch
+tool supports its own finer spacing range.
+
+Supported artwork includes solid opaque fills/strokes, transformed groups and
+compound paths with holes. Transparency, blending, gradients, masks, clipping,
+linked content and SVG text require conversion in an SVG editor. Layered pages
+are limited to 250,000 mm²; large beds can still use outline paths. Review the
+generated preview and pen assignments before starting.
+
+## Launching from source
+
+Use Python 3.10 or newer. In Terminal, from the repository root:
 
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python launch.py
 ```
 
-Then use the launcher. On this Mac, the sender also recognises the existing
-Inkscape extension's pyserial installation.
+The browser opens at http://127.0.0.1:8769/. On later runs, use the last command
+or **Start-SVG-Plotter.command**. The launcher checks `SVG_PLOTTER_PYTHON` if set,
+then the repository's `.venv/bin/python`, then its current Python interpreter.
+Use an environment with the dependencies above installed. The native app does
+not need this environment. Stop the existing sender before changing versions;
+a browser refresh alone does not update the Python process.
 
 ## Validation
 
 ```sh
-node --test tests/conversion.cjs
+node --test tests/*.cjs
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-The 13 inherited sender tests use a simulated controller, never real USB.
-Additional tests cover placement, generated G-code and its server validation.
-`tests/browser.html` contains native SVG geometry checks for manual browser testing.
-Browser checks and a physical trial were not completed in the creation session:
-its sandbox blocked local server access. Treat this as a first version pending
-those checks; begin with a small simple drawing and inspect the preview.
+The automated sender tests use simulated controllers, never real USB. They
+cover profiles, placement, generated commands, recovery, text, catalogues and
+other features. `tests/browser.html` contains native SVG geometry checks for
+manual browser testing. See [1.7.0 validation](VALIDATION_1.7.0.md),
+[installer validation](VALIDATION_INSTALLER_1.7.0.md) and the outstanding
+[physical trial](PHYSICAL_TRIAL.md). The release remains a pre-release while
+interactive and physical checks are outstanding.
 
 Sender code is reused under the included MIT licence from Gordon Brindle's
 Handwriting Studio. The original installation and Dan's course repository remain
@@ -233,7 +291,8 @@ unchanged.
 
 ## Built-in test drawings
 
-Small star, geometry check, curves and separate strokes, a square grid, and coloured shapes (red, blue, green and purple).
+Small star, geometry check, curves and separate strokes, a square grid,
+coloured shapes (red, blue, green and purple), and a layered-fill check.
 Use **Save test SVG** to download the selected original. Copies are also in
 `examples/`. Refresh the browser window after updating the app.
 
@@ -241,7 +300,8 @@ Use **Save test SVG** to download the selected original. Copies are also in
 
 The preview preserves the colours of SVG outlines. Paths are grouped by pen
 colour in order of first appearance. Placement is calculated once for the entire
-SVG, so colours stay aligned. Solid fills still produce outlines only.
+SVG, so colours stay aligned. Outline mode traces filled shapes as outlines;
+Layered colour fills hatches their visible coloured regions.
 
 Choose Start drawing. For an SVG drawing, the robot remains
 at the top-left position with the pen raised and asks for the first colour.
@@ -259,9 +319,9 @@ Colour-change G-code downloads contain `; PEN_CHANGE #rrggbb` markers. These
 pauses are enforced by this app; a generic G-code sender may ignore the comments
 and draw everything without stopping. Reload colour jobs into this app.
 
-The colour edition opens at http://127.0.0.1:8769/. Disconnect the robot from
-the older window before connecting here. Run `python3 launch.py` again to open
-this edition; refreshing an older sender alone does not upgrade its Python code.
+The native app and source launcher use http://127.0.0.1:8769/. Finish any drawing
+and quit the old app or stop its sender before opening a different version.
+Refreshing an older window alone does not upgrade its Python code.
 
 ## Your Pigma Micron pens
 
@@ -284,8 +344,10 @@ and Black 05; they remain separate entries.
 
 ## Colour themes
 
-Open the **Colour themes** tab to browse nine Studio Yorktown palettes, their
-original swatches, matching owned Micron pens and adaptation notes. Use **Apply to drawing** to recolour the loaded paths and update their physical
+Open **Colour themes** to browse the 15 supplied adaptations: nine based on
+Studio Yorktown palettes and six Sharpie Glam Pop combinations. Each shows its
+swatches, assigned pens and adaptation notes. Personal themes appear here too.
+Use **Apply to drawing** to recolour the loaded paths and update their physical
 pen assignments. The last original colour group uses the darkest theme pen,
 with earlier groups assigned accent pens. No geometry or hatching is changed.
 **Restore original colours** returns to the loaded colours, even after
@@ -300,9 +362,10 @@ display optimisation does not simplify or alter the G-code sent to the plotter.
 
 ## Recovering an interrupted plot
 
-Progress is saved in `logs/plotter-state.json`, with the exact validated drawing in
-`logs/plotter-job.json`. Keep both files together. These local files are ignored by Git
-and are not uploaded to GitHub. The saved state includes command acknowledgements,
+The native app saves `plotter-state.json` and the exact validated drawing in
+`plotter-job.json` under `~/Library/Application Support/SVG Plotter/`. Source
+runs use the repository's `logs/` folder. Keep both files together. These local
+files are not uploaded to GitHub. The saved state includes command acknowledgements,
 the command being transmitted, USB device identity and confirmed pen changes.
 Acknowledgement means the controller accepted a command, not that it finished moving.
 The sender records transmission uncertainty before writing to USB and checks the
@@ -359,7 +422,8 @@ physical USB disconnection and repeated-homing tests are still required.
 ## Park when paused
 
 **Pause** finishes the movement already in the controller's queue, records the
-actual stopping position, lifts to Z0.5 and parks at X0 Y0. The display says
+actual stopping position, lifts to the selected profile's pen-up height
+(Z0.5 for the supplied T-A4) and parks at X0 Y0. The display says
 **Pausing** until the park is verified. This is a controlled return to the top-left;
 it does not run another homing cycle or change the drawing registration.
 
@@ -372,16 +436,23 @@ recovery is blocked because the physical resume point is uncertain.
 
 ## Expanded pen inventory
 
-The selectors now offer 29 pens: the existing 19 Pigma Microns, seven Stabilo
-Point 88 fine 0.4 mm pens (red 88/40, blue 88/41, green 88/43, yellow 88/44,
-orange 88/54, purple 88/55 and pink 88/56), and three Uni-ball Eye UB-157E
-0.7 mm fine pens (black, blue and red). References are recorded as supplied
-in Pens.txt. Existing Micron pen IDs and default selections are preserved;
-the additional families can be selected for any colour pass. Pen labels and
-saved jobs retain the brand, size and reference. Changing pens does not adjust
-hatch spacing, pen height or machine settings automatically.
+The supplied catalogue contains 53 pens: 19 Pigma Microns, 24 Sharpie Glam Pop
+Fine Point pens, seven Stabilo Point 88 fine 0.4 mm pens (red 88/40, blue 88/41,
+green 88/43, yellow 88/44, orange 88/54, purple 88/55 and pink 88/56), and three
+Uni-ball Eye UB-157E 0.7 mm fine pens (black, blue and red). User-added pens and
+availability edits change your personal list. Pen labels and saved jobs retain
+the brand, size and reference. Changing pens does not adjust hatch spacing,
+pen height or machine settings automatically.
 
-Choose **Page size** for A4, A5, A6, **Postcard (148 × 105 mm, landscape)**, C5/C6 envelopes or DL envelopes. **Custom** enables width and height in millimetres, up to the 210 × 297 mm bed. Position the sheet at the top-left home position. The preview and SVG fitting use the selected sheet; margins must be less than half its shorter side. Envelope presets use the narrow edge across the bed.
+## Page sizes
+
+Choose **Page size** for A3, A4, A5, A6, **Postcard (148 × 105 mm, landscape)**,
+C5/C6 or DL envelopes. Only presets fitting the active profile's bed are
+available. **Custom** enables width and height in millimetres within that bed
+(210 × 297 mm for the supplied T-A4). Position the sheet at the top-left home
+position. The preview and SVG fitting use the selected sheet; margins must be
+less than half its shorter side. Envelope presets use the narrow edge across
+the bed. A3 requires a suitably sized custom profile.
 
 ### Positioning paper, envelopes and postcards
 
@@ -395,7 +466,7 @@ Choose **Page size** for A4, A5, A6, **Postcard (148 × 105 mm, landscape)**, C5
    Merely loading or saving a guide does not start movement.
 4. The guide plots four L-shaped corner marks, four inward edge-centre ticks
    and a centre cross. It uses one pen pass. All marks remain inside the selected
-   stock dimensions and the 210 × 297 mm bed; there is no complete border.
+   stock dimensions and the selected profile's bed; there is no complete border.
 5. Leave the carrier fixed. Place the actual stock with its corners aligned to
    the corner marks, then secure it. These marks define the stock edges, not the
    artwork margins. The centre cross will normally be covered by the stock.
@@ -533,6 +604,28 @@ The native Mac app stores the catalogue at:
 Replacing the application preserves this file. The source launcher stores it
 in its existing `logs` data directory. If the saved catalogue is damaged, the
 app preserves it and disables edits rather than replacing it with defaults.
+
+### Back up the rest of your settings
+
+Catalogue export includes pens, inks and themes only. Before moving to another
+Mac, save your draft and finish or cancel active work, then quit the app and
+copy `~/Library/Application Support/SVG Plotter/` to a backup. Source users
+back up `logs/` instead. Relevant files include:
+
+| File | Contents |
+| --- | --- |
+| `catalogue.json` | Pens, inks, themes and availability |
+| `plotter-profiles.json` | Custom machines and selected profile |
+| `postcard.json` | The saved postcard message, address and layout |
+| `fonts.json` | Imported fonts and plotting contours |
+| `plotter-state.json` and `plotter-job.json` | Recovery state and its drawing; keep together |
+
+Only files for features you have saved may exist. Installing an app update
+preserves this folder. Source and native-app data are not migrated
+automatically. Recovery files describe the original physical setup: copying
+them to another Mac does not establish that its USB port, machine position,
+paper or pen height matches. Handle any outstanding recovery in the original
+sender before switching installations.
 
 ## Tooltips and About
 

@@ -1,2 +1,54 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SVG Plotter · T-A4</title><style>body{font:18px/1.65 system-ui,sans-serif;max-width:780px;margin:7vh auto;padding:24px;background:#f9f0de;color:#392b24}a{color:#843c17}h1{font-size:2.5rem;line-height:1.15}.button{display:inline-block;background:#392b24;color:#fff;padding:14px 24px;border-radius:8px;text-decoration:none}code{background:#eadfcb;padding:4px}footer{margin-top:60px;font-size:15px}</style></head><body><p>WRITING ROBOT T-A4</p><h1>SVG Plotter</h1><p>Preview SVG paths, choose your pens and plot colour by colour.</p><p><a class="button" href="http://127.0.0.1:8769/">Open the local app</a></p><h2>Start the app on your Mac first</h2><p>This page cannot start the Python server or connect to USB. Download the versioned Mac pre-release from GitHub Releases. Extract the ZIP, quit the old sender and drag SVG Plotter into Applications. See the installation instructions for compatibility and validation status. Developers can run <code>.venv/bin/python launch.py</code> from the repository folder, then use the button above.</p><p><a href="https://github.com/GWB2025/svg-plotter-ta4#install-the-mac-application-recommended">First-time installation and README</a> · <a href="https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/USER_GUIDE.md">User guide</a></p><p>Opening the app does not start the robot. Connect, clear the bed, home and confirm readiness in the local app.</p><footer>Maintained by Gordon Brindle. Inspired by <a href="https://youtu.be/nD3XlqFhcEI">Rev Dan Catt</a>, with colour references credited to <a href="https://studioyorktown.github.io/coloryorktownhall/">Studio Yorktown</a>. Independent project. Software: MIT licence.</footer><p><a href="https://github.com/GWB2025/svg-plotter-ta4/releases">Download releases</a> · <a href="https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/PHYSICAL_TRIAL.md">Physical trial instructions</a></p></body></html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SVG Plotter · Mac app and plotter profiles</title>
+  <style>
+    body{font:18px/1.65 system-ui,sans-serif;max-width:780px;margin:7vh auto;padding:24px;background:#f9f0de;color:#392b24}
+    a{color:#843c17}h1{font-size:2.5rem;line-height:1.15}
+    .button{display:inline-block;background:#392b24;color:#fff;padding:14px 24px;border-radius:8px;text-decoration:none}
+    code{background:#eadfcb;padding:4px}footer{margin-top:60px;font-size:15px}
+  </style>
+</head>
+<body>
+  <p>SVG PLOTTER 1.7.0 · PRE-RELEASE</p>
+  <h1>SVG Plotter</h1>
+  <p>Preview SVG artwork or text, choose your pens and plot colour by colour.
+    Use the supplied Writing Robot T-A4 profile, configure a compatible GRBL
+    Z-lift machine, or export prepared SVG for another plotter's own software.</p>
+  <p><a class="button" href="http://127.0.0.1:8769/">Open the local app</a></p>
+
+  <h2>Install and open the app on your Mac first</h2>
+  <p>If you have the supplied Installer ZIP, extract it, finish any drawing and
+    quit the old SVG Plotter, then open the included <code>.pkg</code>.
+    Choose Continue, then Install. Open SVG Plotter from Applications afterwards.
+    Your saved settings are retained and Python is included.</p>
+  <p>The supplied Apple silicon build requires macOS 15 or later. The installer
+    is unsigned and the app is not Apple-notarised. See the installation guide
+    for compatibility, opening instructions and validation status.</p>
+  <p>As of 29 October 2026, no downloads have been published in GitHub Releases.
+    The current installer was supplied separately. GitHub's Code → Download ZIP
+    contains source code; developers can follow the build guide or run
+    <code>.venv/bin/python launch.py</code> after installing the source dependencies.</p>
+  <p>This page cannot launch the native app, start its server or connect to USB.
+    Open the installed app first, then use the button above if you want its
+    browser view. Opening the app does not start the robot: connect, clear the
+    bed, home and confirm readiness in the app.</p>
+  <p>
+    <a href="https://github.com/GWB2025/svg-plotter-ta4#install-the-mac-application-recommended">Installation and README</a> ·
+    <a href="https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/USER_GUIDE.md">User guide</a> ·
+    <a href="https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/MAC_RELEASE.md">Build guide</a>
+  </p>
+  <p>
+    <a href="https://github.com/GWB2025/svg-plotter-ta4/releases">GitHub release status</a> ·
+    <a href="https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/PHYSICAL_TRIAL.md">Physical trial instructions</a>
+  </p>
+  <footer>
+    Maintained by Gordon Brindle. Inspired by
+    <a href="https://youtu.be/nD3XlqFhcEI">Rev Dan Catt</a>, with colour references
+    credited to <a href="https://studioyorktown.github.io/coloryorktownhall/">Studio Yorktown</a>.
+    Independent project. Software: MIT licence.
+  </footer>
+</body>
+</html>
