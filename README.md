@@ -154,6 +154,13 @@ Nine supplied theme references credit **Studio Yorktown**: [Color Town Hall](htt
 
 This is Gordon’s independent implementation and is not an official product of, or endorsed by, Dan or Studio Yorktown. Dan’s videos, transcripts, screenshots and postcard artwork are not included in this repository. Acknowledgement does not grant a licence to third-party material.
 
+## AI assistance
+
+This project includes contributions developed by Gordon Brindle with assistance
+from OpenAI's ChatGPT, particularly with software implementation and
+documentation. Gordon directs the project and makes the final design and
+development decisions.
+
 ## Licence
 
 The project’s original software is available under the [MIT licence](LICENSE), copyright © 2026 Gordon Brindle. Preserve copyright and licence notices when redistributing it. Third-party works, names and palette references remain subject to their respective rights; the MIT licence does not relicense those works. Flask, pyserial, pywebview, PyObjC and other bundled dependencies retain their own licences. See the [Hershey font notices](docs/FONT_LICENCES.txt) and [OpenType.js notice](docs/OPENTYPE_LICENSE.txt).

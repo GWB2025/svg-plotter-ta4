@@ -101,3 +101,10 @@ as well as the Python checks.
 Personal handwriting is stored in `data/`, excluded from Git and release files.
 When updating an existing installation, replace the application code only;
 retain `data/` and use the same `HANDWRITING_DATA_DIR` if configured.
+
+## AI assistance
+
+This project includes contributions developed by Gordon Brindle with assistance
+from OpenAI's ChatGPT, particularly with software implementation and
+documentation. Gordon directs the project and makes the final design and
+development decisions.
