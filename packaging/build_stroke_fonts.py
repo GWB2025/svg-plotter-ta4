@@ -1,6 +1,7 @@
 """Convert the supplied SVG stroke fonts into portable plotting polylines."""
 
 import argparse
+import copy
 import json
 import math
 from pathlib import Path
@@ -19,6 +20,44 @@ class StrokeFontBuilder:
     )
     NS = {'svg': 'http://www.w3.org/2000/svg'}
     TOKEN = re.compile(r'[MLCZ]|[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?')
+
+    @staticmethod
+    def bounds(paths):
+        """Return ink bounds, including accents, in font coordinates."""
+        points = [point for stroke in paths for point in stroke]
+        if not points:
+            return None
+        return [min(p[0] for p in points), min(p[1] for p in points),
+                max(p[0] for p in points), max(p[1] for p in points)]
+
+    @classmethod
+    def add_macrons(cls, font):
+        """Add Latin long vowels without changing the original glyphs.
+
+        Each macron is one independent horizontal stroke. The dotless i
+        supplies the stem of ī; its macron replaces, rather than covers, the
+        dot. Retain advances so accents do not introduce extra text columns.
+        """
+        glyphs, units = font['glyphs'], font['units']
+        for plain, accented in zip('AEIOUYaeiouy', 'ĀĒĪŌŪȲāēīōūȳ'):
+            if accented in glyphs:
+                continue
+            base = glyphs['ı' if plain == 'i' else plain]
+            left, _, right, top = base['bounds']
+            centre = (left + right) / 2
+            if plain == 'i':
+                # Follow the font's own dot placement, including italic slant.
+                dot = [p[0] for path in glyphs['i']['paths']
+                       for p in path if p[1] > top]
+                if dot:
+                    centre = (min(dot) + max(dot)) / 2
+            width = max(0.18 * units, min(0.36 * units, 0.65 * (right - left)))
+            height = round(top + 0.16 * units, 4)
+            bar = [[round(centre - width / 2, 4), height],
+                   [round(centre + width / 2, 4), height]]
+            paths = copy.deepcopy(base['paths']) + [bar]
+            glyphs[accented] = dict(advance=glyphs[plain]['advance'],
+                                    paths=paths, bounds=cls.bounds(paths))
 
     @staticmethod
     def cubic(points, depth=0):
@@ -84,17 +123,14 @@ class StrokeFontBuilder:
                 if len(character or '') != 1:
                     continue
                 paths = self.paths(glyph.get('d', ''))
-                points = [p for stroke in paths for p in stroke]
-                bounds = ([min(p[0] for p in points), min(p[1] for p in points),
-                           max(p[0] for p in points), max(p[1] for p in points)]
-                          if points else None)
                 glyphs[character] = dict(
                     advance=float(glyph.get('horiz-adv-x', font.get('horiz-adv-x'))),
-                    paths=paths, bounds=bounds,
+                    paths=paths, bounds=self.bounds(paths),
                 )
             fonts.append(dict(id=identifier, name=name,
                               units=float(face.get('units-per-em')),
                               cap_height=glyphs['H']['bounds'][3], glyphs=glyphs))
+            self.add_macrons(fonts[-1])
             credits.append(filename + '.svg\n' +
                            tree.find('svg:metadata', self.NS).text.strip())
         (root / 'assets/postcard-fonts.json').write_text(
@@ -104,6 +140,8 @@ class StrokeFontBuilder:
         (root / 'docs/FONT_LICENCES.txt').write_text(
             'Bundled stroke-font data\n\n'
             'Converted to polylines from the SVG fonts supplied with Inkscape.\n'
+            'Latin macrons added by SVG Plotter from the original letter paths\n'
+            'and separate horizontal strokes; lowercase ī uses dotless ı.\n'
             'No Inkscape executable code is included. Original notices follow.\n\n'
             + '\n\n'.join(credits) + '\n', encoding='utf-8',
         )

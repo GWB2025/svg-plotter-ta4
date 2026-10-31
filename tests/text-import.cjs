@@ -96,3 +96,54 @@ test('paths fit the selected page and produce the existing pen-up G-code sequenc
     assert.ok(gcode.endsWith('G90 G1 X0 Y0 F2400\n'));
   }
 });
+
+const outlineFont = () => ({id:'ttf-fixture',name:'Test Serif Bold',kind:'outline',units:1000,cap_height:700,
+  glyphs:{
+    ' ':{advance:250,paths:[],bounds:null},
+    H:{advance:700,paths:[[[0,0],[500,0],[500,700],[0,700],[0,0]]],bounds:[0,0,500,700]},
+    i:{advance:200,paths:[[[100,0],[200,0],[200,700],[100,700],[100,0]]],bounds:[100,0,200,700]},
+    '?':{advance:600,paths:[[[0,-200],[400,-200],[400,900],[0,-200]]],bounds:[0,-200,400,900]},
+  }});
+
+test('point sizes scale imported contours uniformly and keep spaces on the grid', () => {
+  const f=outlineFont(),a=TextImport.layout(' H i\n H i',{size:12,cellWidth:4,lineHeight:6},f);
+  assert.equal(a.size,12);
+  const p=a.paths[0],scale=12*25.4/72/1000;
+  assert.ok(Math.abs(p[1][0]-p[0][0]-500*scale)<1e-10);
+  assert.ok(Math.abs(p[1][1]-p[2][1]-700*scale)<1e-10);
+  assert.deepEqual(p[0],p.at(-1),'outline remains closed');
+  assert.ok(Math.abs(a.paths[1][0][0]-p[0][0]-8-200*scale)<1e-10);
+  assert.ok(Math.abs(a.paths[2][0][1]-p[0][1]-6)<1e-10);
+  assert.equal(a.width,16);assert.equal(a.height,12);
+  const b=TextImport.layout(' H i\n H i',{size:24,cellWidth:8,lineHeight:12},f);
+  assert.deepEqual(b.paths,a.paths.map(path=>path.map(([x,y])=>[x*2,y*2])));
+  assert.ok(!TextImport.svg(a).includes('<text'));
+});
+
+test('automatic point-size spacing contains every glyph including accents and descenders', () => {
+  for(const f of [...fonts,outlineFont()]) {
+    const auto=TextImport.spacing(f,12);
+    const text=f.kind==='outline'?'Hi?\n?iH':'Rōmānī īte domum\nĀ Ē Ī Ō Ū Ȳ ā ē ī ō ū ȳ';
+    const result=TextImport.layout(text,{size:12},f);
+    assert.equal(result.cellWidth,auto.cellWidth);assert.equal(result.lineHeight,auto.lineHeight);
+    for(const [x,y] of result.paths.flat()) assert.ok(x>=0 && y>=0 && x<=result.width && y<=result.height);
+  }
+});
+
+test('point-size mode rejects invalid sizes or spacing that would clip lettering', () => {
+  for(const size of [0,5,73,NaN,Infinity,'12']) assert.throws(()=>TextImport.layout('H',{size},outlineFont()),/size/i);
+  assert.throws(()=>TextImport.layout('H',{size:12,cellWidth:.5,lineHeight:6},outlineFont()),/column spacing/i);
+  assert.throws(()=>TextImport.layout('H',{size:12,cellWidth:4,lineHeight:.5},outlineFont()),/row spacing/i);
+});
+
+test('combining macrons use one ASCII-art column and leave following tab stops intact', () => {
+  const a=TextImport.layout('Rōmānī\tīte domum',{size:12},font);
+  assert.deepEqual(TextImport.layout('Rōmānī\tīte domum'.normalize('NFD'),{size:12},font),a);
+  assert.equal(a.lines[0],'Rōmānī  īte domum');
+});
+
+test('supplementary imported characters occupy one column before a tab', () => {
+  const f=outlineFont();f.glyphs['𝔸']=f.glyphs.H;
+  const result=TextImport.layout('𝔸\ti',{tabSize:4},f);
+  assert.deepEqual(result.lines,['𝔸   i']);assert.equal(result.columns,5);
+});

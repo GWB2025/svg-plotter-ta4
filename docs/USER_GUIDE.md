@@ -1,6 +1,6 @@
 # SVG Plotter user guide
 
-For **version 1.7.0**, including the Mac installer. Load SVG artwork or plain
+For **version 1.8.0**, including the Mac installer. Load SVG artwork or plain
 text, inspect the pen-path preview, then plot using a compatible GRBL Z-lift
 profile or export prepared SVG for the machine's own software. The supplied
 Writing Robot T-A4 profile is the default.
@@ -15,7 +15,7 @@ dependencies are included; no Terminal setup is needed.
 2. Extract the **Installer ZIP**, open the included `.pkg`, then choose
    **Continue → Install**. Enter your administrator password if requested.
 3. Open **Finder → Applications → SVG Plotter**. The title and About panel
-   should show **1.7.0**.
+   should show **1.8.0**.
 
 The installer upgrades `/Applications/SVG Plotter.app` without writing to your
 saved settings. For an application ZIP or DMG, copy the app to Applications
@@ -101,7 +101,7 @@ Custom machines have simulated-controller test coverage, not physical validation
    and choose a file or paste the text.
 2. Inspect the pen-path preview. Every character occupies a fixed-width cell;
    spaces and blank lines are retained and long lines never wrap. Tabs advance
-   to the next tab stop (8 columns by default). Hershey Sans supplies pen strokes.
+   to the next tab stop (8 columns by default). Choose the lettering in **Font / style**.
 3. Edit the text and adjust **Column spacing**, **Row spacing** and **Tab width**
    if needed. The complete file is included, including signatures and website
    footers; delete only the lines you do not want to plot.
@@ -112,9 +112,10 @@ Custom machines have simulated-controller test coverage, not physical validation
 
 Spacing is measured in millimetres before page fitting. **Keep original size
 and position** retains those dimensions from the page's top-left; fitting scales
-both axes equally. The preview's lettering uses pen strokes and will differ
-from the screen font in the source editor. Single-line lettering makes many
-short strokes, so a detailed ASCII picture can take some time to plot.
+both axes equally, including the chosen font size. The source text area stays
+monospaced for editing; the pen-path preview shows the selected font. Outline
+fonts trace letter boundaries, while bundled stroke fonts follow pen strokes.
+A detailed ASCII picture can take some time to plot.
 
 **Save text** downloads the edited `.txt`; save it before closing the app if
 you want to keep your edits. **Export SVG** saves the complete path drawing at
@@ -123,12 +124,44 @@ checked commands and assigned pen. Editing text after preparation does not
 change the loaded drawing until you prepare it again.
 
 Plain text supports UTF-8 and BOM-marked UTF-16, Windows/Mac/Unix line endings,
-and the characters available in the bundled stroke font. Missing characters
+and the characters available in the selected font. Combining Latin accents
+are normalised so, for example, ō and o followed by a combining macron use one
+column and produce the same paths. Missing characters
 are reported; no replacement glyphs or omitted characters are silently plotted.
 Limits are 50,000 input characters, 2,000 columns, 1,000 rows and 240,000 path
 points. Large drawings must fit onto one selected page; there is no pagination.
 The dedicated text picker accepts up to 2 MB. Existing Studio G-code `.txt`
 files still load through Plot drawing, with the original command validation.
+
+### Font, style and size (version 1.8.0)
+
+- **Font / style** offers Hershey Sans, Serif, Serif Italic and Script, plus all
+  previously imported fonts, including those imported in Postcard text.
+- **Import fonts…** accepts `.ttf` files up to 2 MB each. Imports immediately
+  appear in both text editors and persist across restarts. Import the actual
+  bold, italic or other variant file to choose that style; the app does not
+  synthesise missing font styles. Variable fonts use their default face.
+- **Letter sizing → Fit to spacing** retains the original ASCII behaviour:
+  letters scale to the row/column dimensions and may change proportions.
+- **Letter sizing → Font size (points)** enables **Font size (pt)**, from 6 to
+  72 pt. One point is 25.4/72 mm of the em square, not the capital-letter height.
+  Letter proportions are preserved. **Automatic spacing** calculates fixed
+  cells from the font's full ink bounds, leaving room for accents and descenders.
+- Untick **Automatic spacing** to adjust row/column gaps manually. If the cells
+  are too small, the app explains the minimum spacing and blocks export and
+  preparation until corrected. Fonts with unusually wide/tall glyphs may need
+  a smaller size to stay within the 40 mm column / 60 mm row limits.
+
+Every character still occupies exactly one grid column, even in a proportional
+font such as Cinzel. There is no word wrapping or proportional typesetting in
+this editor. **Fit drawing to page** later scales font size along with the
+whole drawing; select **Keep original size and position** to retain the size
+chosen here, provided it fits the selected page. **Save text** stores only the
+characters. **Export SVG** retains the letter paths, size and spacing; the font
+and layout controls themselves reset when the app is reopened.
+
+For Roman lettering, choose an imported **Cinzel Regular · outline**, select
+**Font size (points)**, leave automatic spacing on and paste **RŌMĀNĪ ĪTE DOMUM**.
 
 ## Rotating landscape artwork (version 1.3.2)
 
@@ -522,6 +555,13 @@ an ellipsis uses three dots. Unsupported characters must be replaced or rendered
 using another font before export or plotting. Long unbroken words are flagged
 if they cannot fit; insert a line break or adjust the box/font.
 
+Since version 1.7.1, all four bundled fonts support **Ā Ē Ī Ō Ū Ȳ ā ē ī ō ū ȳ**.
+Paste **Rōmānī īte domum** into either text block. The bars (macrons) are plotted
+as separate strokes; ī uses a dotless stem. Both precomposed letters and letters
+followed by a combining macron produce the same postcard paths. Imported fonts
+still depend on their own character coverage. Accents count towards the existing
+page-edge and line-overlap checks, so leave room above capitals with macrons.
+
 Choose **Save draft** to retain the editable text and layout in
 `~/Library/Application Support/SVG Plotter/postcard.json`. It survives app updates
 and restores on reopening. This version retains one saved draft; unsaved changes
@@ -635,6 +675,8 @@ help or closes an editor. The main tabs support Left/Right, Home and End.
 data behaviour, project link, credits and licence information.
 
 ### Import your own postcard fonts
+
+The saved font collection is also available in **Text & ASCII art** from version 1.8.0. Imports made in either editor appear in both without replacing the current text or font choices.
 
 On **Postcard text**, click **Import fonts…** and choose one or more `.ttf` files. After the confirmation, select the font in the message or address **Font** menu. Names end in **outline** for imported fonts, and the selected font’s copyright appears below the menu. Importing keeps your current text, font selections and undo history. Duplicate files are skipped. Invalid imports leave the existing library unchanged.
 

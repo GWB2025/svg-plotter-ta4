@@ -90,3 +90,31 @@ test('message-only and address-only drafts omit the disabled text', () => {
   doc.message.enabled = false; doc.divider = true;
   assert.deepEqual(layout(doc, fonts).paths, [[[74,6],[74,99]]]);
 });
+
+test('Latin macrons work in both text blocks and both Unicode forms in every bundled font', () => {
+  for (const font of fonts) {
+    const doc = draft();
+    for (const key of ['message', 'address']) {
+      Object.assign(doc[key], {text:'Rōmānī īte domum', font:font.id, size:12});
+    }
+    const result = layout(doc, fonts);
+    assert.deepEqual(result.errors, [], font.name);
+    assert.ok(!svg(result).includes('<text'), 'macrons export as plotter paths');
+    for (const key of ['message', 'address']) doc[key].text = doc[key].text.normalize('NFD');
+    assert.deepEqual(layout(doc, fonts), result, 'combining macrons use the same glyphs');
+    const glyphCount = [...'Rōmānī īte domum'].reduce((n, c) => n + font.glyphs[c].paths.length, 0);
+    assert.equal(result.paths.length, 2 * glyphCount, 'no missing or extra pen strokes');
+  }
+});
+
+test('macrons participate in page clipping and line overlap checks', () => {
+  for (const font of fonts) {
+    const doc = draft();
+    Object.assign(doc.message, {text:'Ā', font:font.id, y:0});
+    const clipped = layout(doc, fonts);
+    assert.ok(clipped.errors.some(e => e.includes('outside')), font.name);
+    assert.throws(() => svg(clipped), /outside/);
+    Object.assign(doc.message, {text:'Ā\nĀ', y:10, spacing:2});
+    assert.ok(layout(doc, fonts).errors.some(e => e.includes('overlap')), font.name);
+  }
+});

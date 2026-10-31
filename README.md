@@ -2,9 +2,24 @@
 
 An SVG plotting app maintained by Gordon Brindle, with saved profiles for different makes and models. The supplied Writing Robot T-A4 profile remains the default.
 
-Current app version: **1.7.0 pre-release**. A standard macOS `.pkg` installer
+Current app version: **1.8.0 pre-release**. A standard macOS `.pkg` installer
 now places the existing Apple silicon app in Applications and preserves saved
 settings. See [installation](#install-the-mac-application-recommended).
+
+Version 1.8.0 adds imported fonts and a **Font / style** menu to **Text & ASCII
+art**, sharing the same saved font collection as Postcard text. Choose a bundled
+style or import a regular, bold or italic TrueType file. **Font size (points)**
+preserves proportions at 6–72 pt, with automatic or checked manual grid spacing.
+The existing **Fit to spacing** mode remains available. Spaces, tabs and columns
+stay fixed; SVG export contains the chosen letter paths. See
+[text fonts and sizing](docs/USER_GUIDE.md#font-style-and-size-version-180) and
+[1.8.0 validation](docs/VALIDATION_1.8.0.md).
+
+Version 1.7.1 adds Latin macrons to all four bundled postcard fonts:
+**Ā Ē Ī Ō Ū Ȳ ā ē ī ō ū ȳ**. For example, **Rōmānī īte domum** now previews,
+exports and plots as letter strokes with separate bars. Lowercase ī has no dot.
+Both precomposed and combining macrons work in the postcard editor.
+See [macron validation](docs/VALIDATION_1.7.1.md).
 
 Version 1.7.0 adds **Your plotter**: add, duplicate, edit and select persistent
 plotter profiles, with bed dimensions and configurable GRBL Z-lift controls.
@@ -47,7 +62,7 @@ G-code share the same rotation. See [landscape artwork](docs/USER_GUIDE.md#rotat
 
 Version 1.3.1 consolidates the Mac application, recovery, pen catalogue, page guides and postcard features with the October connection fixes. The source launcher detects an older running sender instead of silently reusing it. The repository also includes [Handwriting Capture 1.2](handwriting-capture/README.md), supporting the full alphabet, digits and punctuation.
 
-The 1.7.0 build remains a **pre-release** pending the [physical T-A4 and postcard trial](docs/PHYSICAL_TRIAL.md). Automated tests do not establish physical registration, colour measurement accuracy or compatibility with a particular custom machine. See [app validation](docs/VALIDATION_1.7.0.md) and [installer validation](docs/VALIDATION_INSTALLER_1.7.0.md). Earlier validation reports describe their named releases.
+The 1.8.0 build remains a **pre-release** pending the [physical T-A4 and postcard trial](docs/PHYSICAL_TRIAL.md). Automated tests do not establish physical registration, colour measurement accuracy or compatibility with a particular custom machine. See [1.8.0 validation](docs/VALIDATION_1.8.0.md). Each Installer ZIP includes its own `VALIDATION.json`; earlier validation reports describe their named releases.
 
 Version 1.3.0 adds **Import fonts…** to Postcard text. Choose `.ttf` files, then use them in either Font menu. Imported outline fonts are saved privately on this Mac and survive app updates; bundled Hershey fonts remain single-line choices.
 
@@ -72,7 +87,7 @@ updates, and saved drawings retain their original pen details. See the
 The repository includes the source and a two-architecture Mac build workflow.
 As of 29 October 2026, no downloads have been published in
 [GitHub Releases](https://github.com/GWB2025/svg-plotter-ta4/releases).
-The 1.7.0 Apple silicon app and Installer ZIP have been supplied separately;
+The 1.8.0 Apple silicon app and Installer ZIP have been supplied separately;
 use the instructions below if you have that download, or follow the
 [build instructions](docs/MAC_RELEASE.md#build-locally). GitHub's **Code →
 Download ZIP** contains source code, not the ready-to-run app.
@@ -139,7 +154,7 @@ Opening the app does not connect to USB or start movement. Select the device, co
 - A3/A4/A5/A6, postcards, envelopes and custom sizes within the selected bed.
 - Exact-size stock positioning guides and labelled pen colour swatch sheets.
 - Postcard message/address layout and private TrueType font import.
-- Text-file and ASCII-art plotting with fixed-width stroke lettering.
+- Text-file and ASCII-art plotting with bundled/imported fonts, point sizes and fixed columns.
 - An offline Materials guide credited to Dan Catt.
 - Optional visible-layer hatching and responsive pen-path previews.
 - Built-in test drawings and pause, continue and cancel controls.
@@ -170,7 +185,7 @@ The project’s original software is available under the [MIT licence](LICENSE),
 - [User guide](docs/USER_GUIDE.md): installation, plotting, profiles and saved data.
 - [Mac releases](docs/MAC_RELEASE.md): app and installer builds, signing and publishing.
 - [Physical trial](docs/PHYSICAL_TRIAL.md): T-A4, postcard and recovery checks.
-- [App validation](docs/VALIDATION_1.7.0.md) and [installer validation](docs/VALIDATION_INSTALLER_1.7.0.md): completed checks and remaining limitations.
+- [1.8.0 validation](docs/VALIDATION_1.8.0.md): completed app and installer checks and remaining limitations.
 - [Handwriting Capture 1.2](handwriting-capture/README.md): the separate capture app; it is not included in SVG Plotter's native bundle.
 
 ## Development and checks

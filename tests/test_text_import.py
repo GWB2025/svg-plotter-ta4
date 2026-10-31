@@ -6,11 +6,41 @@ import subprocess
 import tempfile
 import unittest
 
+from font_library import FontLibrary
 from plotter_app import create_plotter_app
 from plotting import Plotter, parse_job
+from test_font_library import record
 
 
 class TextImportTests(unittest.TestCase):
+    def test_saved_imported_font_and_point_size_round_trip_through_sender(self):
+        with tempfile.TemporaryDirectory() as directory:
+            library = FontLibrary(Path(directory))
+            library.add([record()])
+            font = FontLibrary(Path(directory)).snapshot()['fonts'][0]
+        script = r"""
+          const fs = require('fs');
+          const text = require('./assets/text-import.js');
+          const svg = require('./assets/svg-import.js');
+          const font = JSON.parse(fs.readFileSync(0, 'utf8'));
+          const result = text.layout(' H? H\n H? H', {size:18}, font);
+          process.stdout.write(JSON.stringify({
+            paths:result.paths,
+            gcode:svg.makeColourGcode(result.paths,result.colours),
+          }));
+        """
+        result = json.loads(subprocess.check_output(
+            ['node', '-e', script], input=json.dumps(font), text=True,
+            cwd=Path(__file__).resolve().parents[1],
+        ))
+        job = parse_job(result['gcode'], 'imported-text.gcode')
+        self.assertEqual(len(job['paths']), 6)
+        for actual, expected in zip(job['paths'], result['paths']):
+            self.assertEqual(actual[0], actual[-1])
+            for point, target in zip(actual, expected):
+                for coordinate, value in zip(point, target):
+                    self.assertAlmostEqual(coordinate, value, places=4)
+
     def test_ascii_paths_round_trip_through_sender(self):
         script = r"""
           const text = require('./assets/text-import.js');
@@ -49,7 +79,12 @@ class TextImportTests(unittest.TestCase):
             page = client.get('/', base_url=base).get_data(as_text=True)
             self.assertIn('id="text-panel"', page)
             self.assertIn('wrap="off"', page)
-            for name in ('text-import.js', 'text-editor.js'):
+            self.assertIn('id="text-font"', page)
+            self.assertIn('id="text-size"', page)
+            self.assertLess(page.index('assets/font-library-client.js'),
+                            page.index('assets/postcard-editor.js'))
+            for name in ('text-import.js', 'text-editor.js',
+                         'font-library-client.js'):
                 with client.get('/assets/' + name, base_url=base) as reply:
                     self.assertEqual(reply.status_code, 200)
             self.assertFalse(plotter.snapshot()['connected'])

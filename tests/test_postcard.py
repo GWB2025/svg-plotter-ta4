@@ -86,7 +86,7 @@ class PostcardTests(unittest.TestCase):
           console.log(JSON.stringify(fonts.map(font => {
             const doc = structuredClone(defaults);
             doc.message.font = font.id;
-            doc.message.text = 'Hello! Café £5';
+            doc.message.text = 'Rōmānī īte domum';
             doc.address.text = 'A. Sample\\n10 Example Road\\nTEST TOWN';
             const result = layout.layout(doc,fonts);
             if(result.errors.length)throw Error(result.errors.join('; '));

@@ -73,7 +73,7 @@ def create_plotter_app(manager=None, port=8769):
             'pens.js', 'pens.json', 'themes.js', 'themes.json', 'recolour.js',
             'tooltips.js', 'page-guides.js', 'catalogue.js', 'preview.js',
             'postcard-layout.js', 'postcard-editor.js', 'postcard-fonts.json',
-            'opentype.min.js', 'ttf-fonts.js',
+            'opentype.min.js', 'ttf-fonts.js', 'font-library-client.js',
             'pen-swatches.js', 'swatch-editor.js',
             'materials-guide.js', 'ink-stock.js',
             'text-import.js', 'text-editor.js', 'plotter-profiles.js',

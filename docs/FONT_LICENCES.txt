@@ -1,6 +1,8 @@
 Bundled stroke-font data
 
 Converted to polylines from the SVG fonts supplied with Inkscape.
+Latin macrons added by SVG Plotter from the original letter paths
+and separate horizontal strokes; lowercase ī uses dotless ı.
 No Inkscape executable code is included. Original notices follow.
 
 HersheySans1.svg

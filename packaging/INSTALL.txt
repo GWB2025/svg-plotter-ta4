@@ -1,4 +1,4 @@
-SVG Plotter 1.7.0 — pre-release
+SVG Plotter 1.8.0 — pre-release
 
 INSTALL OR UPDATE
 
@@ -8,7 +8,7 @@ INSTALL OR UPDATE
    Continue and Install. Enter your administrator password if requested.
    For an application ZIP or DMG: copy SVG Plotter.app into Applications.
    Eject a DMG after copying. GitHub's source ZIP is not an application bundle.
-3. Open Finder > Applications > SVG Plotter. Confirm version 1.7.0 in About.
+3. Open Finder > Applications > SVG Plotter. Confirm version 1.8.0 in About.
 4. Choose Your plotter before connecting. Keep the supplied Writing Robot T-A4
    profile for the original machine, refresh connections and select its USB port.
 5. Clear the bed and homing path, choose Home, then secure scrap paper and fit
@@ -25,6 +25,20 @@ installer is not for Intel Macs. The app is ad-hoc signed and the installer is
 unsigned; neither is Apple-notarised. If macOS blocks a trusted download, try
 opening it, then use System Settings > Privacy & Security > Open Anyway.
 Apple guidance: https://support.apple.com/en-gb/102445
+
+VERSION 1.8.0
+
+Text & ASCII art now shares your imported fonts with Postcard text. Choose
+Font / style, then Font size (points) for 6–72 pt lettering. Automatic spacing
+keeps the columns aligned; manual spacing is checked for clipping. Import a
+font's own Bold or Italic .ttf file for those styles. Fit to spacing retains the
+original ASCII sizing. Export SVG preserves the selected lettering and size.
+
+VERSION 1.7.1
+
+All four bundled postcard fonts now include Latin macrons, for example:
+  Rōmānī īte domum
+Bars are separate pen strokes, and ī has a dotless stem.
 
 VERSION 1.7.0
 

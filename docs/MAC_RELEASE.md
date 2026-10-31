@@ -2,10 +2,10 @@
 
 ## Status
 
-Current application: **1.7.0 pre-release**. The standard `.pkg` installer was
-added on 29 October 2026 for the existing app bundle; its creation does not
-change the application version. It targets Applications and includes Python
-and the app's dependencies. See [installer validation](VALIDATION_INSTALLER_1.7.0.md).
+Current application: **1.8.0 pre-release**. The standard `.pkg` installer
+targets Applications and includes Python and the app's dependencies. The
+installer workflow was introduced with 1.7.0; each package includes its own
+validation record. See [1.8.0 validation](VALIDATION_1.8.0.md).
 
 No GitHub Releases are published as of 29 October 2026. The existing app ZIP
 and Installer ZIP were supplied separately. Source commits, Actions build
@@ -14,6 +14,22 @@ artifacts and published release downloads are separate steps; pushing to
 or publish a Mac release.
 
 ## Application changes by version
+
+Version 1.8.0 shares the saved TrueType library between Postcard text and Text &
+ASCII art. The ASCII editor gains a font/style selector, direct import, 6–72 pt
+sizing and automatic or checked manual spacing. Its original fit-to-spacing mode
+remains the default. Point-sized letters retain proportions, spaces/columns and
+closed contours. NFC input and supplementary Unicode columns are handled.
+`font-library-client.js` shares loading, serialises imports and updates both
+editors while retaining edits. No saved-data schema, dependency or sender changes.
+See `VALIDATION_1.8.0.md`.
+
+Version 1.7.1 adds uppercase and lowercase Latin macrons to all four bundled
+Hershey fonts. The existing postcard NFC normalisation accepts both precomposed
+and combining input. Macrons are separate pen strokes and ī uses the existing
+dotless i. Advances and original glyphs remain unchanged. Font regeneration
+preserves the additions. No new dependencies or sender changes.
+See `VALIDATION_1.7.1.md`.
 
 Version 1.7.0 adds persistent machine profiles, a profile editor, configurable
 GRBL Z-lift controls and prepared SVG export for other controller types.
@@ -89,7 +105,7 @@ pywebview 6.2.1. This local Python build requires macOS 15 or later.
 The packaged resource smoke check and ad-hoc signature check
 passed. Disk-image creation is unavailable in the restricted build environment;
 use the ZIP build there. No Apple-notarised public installer has been published.
-Full native-window, physical USB and installer-upgrade checks of 1.7.0 remain
+Full native-window, physical USB and installer-upgrade checks of 1.8.0 remain
 outstanding. The release is labelled pre-release meanwhile. Earlier validation
 reports retain the results and limitations of their named versions.
 
@@ -136,14 +152,14 @@ same way as the ASCII-City Capture installer. After building the app:
 .venv-macos/bin/python -m unittest discover -s tests -p test_macos_installer.py -v
 .venv-macos/bin/python packaging/build_installer.py \
   --app 'dist/SVG Plotter.app' \
-  --output dist/SVG-Plotter-1.7.0-macOS-arm64-Installer.pkg
+  --output dist/SVG-Plotter-1.8.0-macOS-arm64-Installer.pkg
 ```
 
 The builder creates a `.pkg` and a matching Installer ZIP containing the package,
 instructions, validation results and reproducible installer source. It derives
 the version from the bundle and the architecture and minimum macOS version from
 its native binaries, including the bundled Python runtime. The current local
-1.7.0 build requires Apple silicon and macOS 15.0 or later.
+1.8.0 build requires Apple silicon and macOS 15.0 or later.
 Use the matching architecture and app version in the output filename when
 building a different bundle. The installer source uses only the Python standard
 library; `pkgbuild`, `productbuild`, `pkgutil`, `codesign`, `lipo` and `otool`
@@ -161,7 +177,8 @@ link with the source app, verifies its code signature, runs its resource smoke
 test and checks the package destination, upgrade policy and requirements.
 This does not install the application or test physical hardware. The generated
 package is unsigned and unnotarised; app signing and installer signing are
-separate. See `VALIDATION_INSTALLER_1.7.0.md` for this build's results.
+separate. Each Installer ZIP contains its own `VALIDATION.json`; see
+`VALIDATION_1.8.0.md` for the current checks and limitations.
 
 ## Check before publishing
 

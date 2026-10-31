@@ -27,38 +27,59 @@
     return number;
   }
 
+  function metrics(font) {
+    if(!font?.glyphs || !Number.isFinite(font.cap_height) || font.cap_height<=0
+      || !Number.isFinite(font.units) || font.units<=0) fail('The selected font is unavailable.');
+    const boxes=Object.values(font.glyphs).map(g=>g.bounds).filter(Boolean);
+    const top=Math.max(...boxes.map(b=>b[3])),bottom=Math.min(...boxes.map(b=>b[1]));
+    const widest=Math.max(...boxes.map(b=>b[2]-b[0]));
+    if(![top,bottom,widest].every(Number.isFinite)||!(top>bottom && widest>0)) fail('The selected font has invalid metrics.');
+    return {top,bottom,widest};
+  }
+
+  function spacing(font,size) {
+    const {top,bottom,widest}=metrics(font);
+    const scale=setting(size,12,'Font size (pt)',6,72)*25.4/72/font.units;
+    const padded=value=>Math.max(.5,Math.ceil(value*scale/.9*100)/100);
+    return {cellWidth:padded(widest),lineHeight:padded(top-bottom)};
+  }
+
   function layout(text, options = {}, font) {
     if(typeof text !== 'string' || text.length > 50000) fail('Text is too long: the limit is 50,000 characters.');
     if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u.test(text))
       fail('This file contains control codes. Choose a plain text file.');
-    if(!font?.glyphs || !Number.isFinite(font.cap_height) || font.cap_height <= 0)
-      fail('The text stroke font is unavailable.');
-    const cellWidth = setting(options.cellWidth, 3, 'Column spacing (mm)', .5, 40);
-    const lineHeight = setting(options.lineHeight, 5, 'Row spacing (mm)', .5, 60);
+    const {top,bottom,widest}=metrics(font);
+    const sized=options.size!==undefined;
+    const size=sized?setting(options.size,12,'Font size (pt)',6,72):null;
+    const automatic=sized?spacing(font,size):{cellWidth:3,lineHeight:5};
+    const cellWidth = setting(options.cellWidth, automatic.cellWidth, 'Column spacing (mm)', .5, 40);
+    const lineHeight = setting(options.lineHeight, automatic.lineHeight, 'Row spacing (mm)', .5, 60);
     const tabSize = setting(options.tabSize, 8, 'Tab width', 1, 16);
     if(!Number.isInteger(tabSize)) fail('Tab width must be a whole number.');
-    const raw = text.replace(/^\ufeff/, '').replace(/\r\n?/g, '\n').split('\n');
+    const raw = text.replace(/^\ufeff/, '').replace(/\r\n?/g, '\n').normalize('NFC').split('\n');
     if(raw.length > 1000) fail('Text has too many lines: the limit is 1,000.');
     const lines = raw.map(line => {
       let result = '', column = 0;
       for(const character of line) {
         const value = character === '\t' ? ' '.repeat(tabSize - column % tabSize) : character;
-        column += value.length; result += value;
+        column += [...value].length; result += value;
         if(column > 2000) fail('A line is too long: the limit is 2,000 columns.');
       }
       return result;
     });
     const unknown = [...new Set(lines.join(''))].filter(c => !Object.hasOwn(font.glyphs, c));
-    if(unknown.length) fail('The stroke font does not contain ' + unknown.slice(0,12)
+    if(unknown.length) fail('The selected font does not contain ' + unknown.slice(0,12)
       .map(c => JSON.stringify(c) + ' (U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4,'0') + ')').join(', ')
-      + '. Replace these characters before plotting.');
+      + '. Choose another font or replace these characters before plotting.');
     // Use font-wide metrics, never text-dependent metrics: a space always moves
     // the next glyph by exactly one cell, even in a proportional source font.
-    const boxes = Object.values(font.glyphs).map(g => g.bounds).filter(Boolean);
-    const top = Math.max(...boxes.map(b => b[3])), bottom = Math.min(...boxes.map(b => b[1]));
-    const widest = Math.max(...boxes.map(b => b[2] - b[0]));
-    if(!(top > bottom && widest > 0)) fail('The stroke font has invalid metrics.');
-    const sx = .9 * cellWidth / widest, sy = .9 * lineHeight / (top - bottom);
+    const scale=sized?size*25.4/72/font.units:null;
+    if(sized && widest*scale>.9*cellWidth+1e-9)
+      fail('Increase column spacing to at least '+automatic.cellWidth+' mm, enable automatic spacing or reduce the font size.');
+    if(sized && (top-bottom)*scale>.9*lineHeight+1e-9)
+      fail('Increase row spacing to at least '+automatic.lineHeight+' mm, enable automatic spacing or reduce the font size.');
+    const sx = sized?scale:.9 * cellWidth / widest, sy = sized?scale:.9 * lineHeight / (top - bottom);
+    const inset=sized?(lineHeight-(top-bottom)*scale)/2:.05*lineHeight;
     const paths = [];
     let points = 0;
     lines.forEach((line, row) => {
@@ -71,7 +92,7 @@
           if(points > 240000) fail('This text is too complex to plot. Use fewer characters.');
           if(stroke.length > 1) paths.push(stroke.map(([x,y]) => [
             (column + .5) * cellWidth + (x - centre) * sx,
-            row * lineHeight + .05 * lineHeight + (top - y) * sy,
+            row * lineHeight + inset + (top - y) * sy,
           ]));
         }
       });
@@ -79,7 +100,7 @@
     if(!paths.length) fail('Enter some visible text or choose a text file.');
     const columns = Math.max(...lines.map(line => [...line].length)), rows = lines.length;
     return {lines,columns,rows,width:columns*cellWidth,height:rows*lineHeight,
-      cellWidth,lineHeight,tabSize,paths,colours:paths.map(() => '#000000')};
+      cellWidth,lineHeight,tabSize,size,paths,colours:paths.map(() => '#000000')};
   }
 
   function svg(result) {
@@ -95,7 +116,7 @@
     ].join('\n');
   }
 
-  const api = {decode,kind,layout,svg};
+  const api = {decode,kind,layout,svg,spacing};
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TextImport = api;
 })(typeof window === 'undefined' ? globalThis : window);

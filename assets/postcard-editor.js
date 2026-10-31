@@ -23,21 +23,21 @@
         this.document=this.read();for(const key of ['message','address'])for(const field of ['x','y','width'])this.document[key][field]=this.defaults[key][field];
         this.write();this.change();
       };
-      this.start().catch(error=>{$('postcard-error').textContent=error.message;});
+      this.ready=this.start();
+      this.ready.catch(error=>{$('postcard-error').textContent=error.message;});
     }
     async request(data){
       const response=await fetch('/api/postcard',{method:data?'POST':'GET',headers:{'X-Plotter-Token':token,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),cache:'no-store',signal:AbortSignal.timeout(15000)});
       const result=await response.json();if(!response.ok)throw Error(result.error||'Could not save the postcard draft.');return result;
     }
     async start(){
-      const [snapshot,response]=await Promise.all([this.request(),fetch('/assets/postcard-fonts.json')]);
-      if(!response.ok)throw Error('The bundled postcard fonts could not be loaded.');
-      this.bundled=await response.json();this.fonts=[...this.bundled];
-      try{const saved=await this.fontRequest();this.fonts.push(...saved.fonts);$('postcard-font-status').textContent=saved.fonts.length?saved.fonts.length+' imported fonts available.':'Choose .ttf files to add your own fonts.';}
-      catch(error){$('postcard-font-status').textContent=error.message;}
+      const [snapshot,saved]=await Promise.all([this.request(),root.PlotterFonts.load()]);
+      this.fonts=root.PlotterFonts.fonts;
+      $('postcard-font-status').textContent=saved.error||'Imported fonts are shared with Text & ASCII art.';
       this.document=snapshot.document;this.defaults=snapshot.defaults;this.revision=snapshot.revision;this.blocked=!!snapshot.error;
       for(const key of ['message','address'])this.fields(key);
       this.write();this.lastSaved=JSON.stringify(this.document);this.remember();this.render();
+      root.PlotterFonts.subscribe(result=>this.updateFonts(result.fonts));
       $('postcard-error').textContent=snapshot.error||'';
       $('postcard-draft-status').textContent=this.revision==='new'?'No saved draft yet.':'Saved draft restored.';
       $('postcard-divider').disabled=false;
@@ -154,30 +154,22 @@
       try{const result=structuredClone(this.result);if(await root.PlotterPostcard.load(result))$('postcard-draft-status').textContent='Layout prepared in Plot drawing. Save draft to keep the editable text and settings.';}
       catch(error){$('postcard-error').textContent=error.message;}finally{this.preparing=false;this.controls();}
     }
-    async fontRequest(data){
-      const response=await fetch('/api/fonts',{method:data?'POST':'GET',headers:{'X-Plotter-Token':token,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),cache:'no-store',signal:AbortSignal.timeout(30000)});
-      const result=await response.json();if(!response.ok)throw Error(result.error||'Could not read the fonts on this Mac.');return result;
+    updateFonts(fonts){
+      this.fonts=fonts;
+      // Keep edits, undo history and both font selections when either tab imports.
+      for(const key of ['message','address']){
+        const select=$('pc-'+key+'-font'),selected=select.value;select.replaceChildren();
+        for(const font of fonts){const option=node('option',font.name+(font.kind==='outline'?' · outline':''),select);option.value=font.id;}
+        select.value=selected;
+      }
+      this.render();
     }
     async importFonts(){
       const input=$('postcard-font-files'),files=[...input.files];if(!files.length||this.importing)return;
       this.importing=true;$('postcard-font-import').disabled=true;$('postcard-font-status').textContent='Reading fonts…';
       try{
-        if(files.length>20)throw Error('Choose up to 20 fonts at a time.');
-        const records=[];
-        for(const file of files){
-          if(!/\.ttf$/i.test(file.name)||file.size>TrueTypeFonts.MAX_BYTES)throw Error('Choose .ttf files no larger than 2 MB each.');
-          const buffer=await file.arrayBuffer();
-          records.push({original_base64:TrueTypeFonts.base64(buffer),font:TrueTypeFonts.convert(buffer,opentype)});
-        }
-        const result=await this.fontRequest({fonts:records});
-        this.fonts=[...this.bundled,...result.fonts];
-        // Keep edits, undo history and the selected fonts while adding options.
-        for(const key of ['message','address']){
-          const select=$('pc-'+key+'-font'),selected=select.value;select.replaceChildren();
-          for(const font of this.fonts){const option=node('option',font.name+(font.kind==='outline'?' · outline':''),select);option.value=font.id;}
-          select.value=selected;
-        }
-        this.render();$('postcard-font-status').textContent=result.added?result.added+' fonts added. Choose them in either Font menu.':'These fonts are already available. Existing drafts and fonts were kept.';
+        const result=await root.PlotterFonts.importFiles(files);
+        $('postcard-font-status').textContent=result.added?result.added+' fonts added. Available here and in Text & ASCII art.':'These fonts are already available. Existing drafts and fonts were kept.';
       }catch(error){$('postcard-font-status').textContent=error.message+' Existing fonts and draft have been kept.';}
       finally{this.importing=false;$('postcard-font-import').disabled=false;input.value='';}
     }

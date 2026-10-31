@@ -1,5 +1,5 @@
 <section id="text-panel" role="tabpanel" aria-labelledby="text-tab" hidden>
-  <div class="section-heading"><div><h2>Plot text &amp; ASCII art</h2><p>Keep every space, column and line break. Convert characters to fixed-width pen strokes.</p></div></div>
+  <div class="section-heading"><div><h2>Plot text &amp; ASCII art</h2><p>Choose your lettering while keeping every space, column and line break on a fixed grid.</p></div></div>
   <div class="text-workspace">
     <div>
       <label class="text-file-label">Open a plain text file <input id="text-file" type="file" accept=".txt,text/plain"></label>
@@ -10,18 +10,29 @@
     </div>
     <div class="text-review">
       <h3>Pen-path preview</h3>
-      <p class="subtle">Hershey Sans · fixed-width stroke lettering</p>
+      <div class="text-font-import"><button id="text-font-import" type="button" disabled title="Import TrueType font files for use here and in Postcard text.">Import fonts…</button><input id="text-font-files" type="file" accept=".ttf,font/ttf" multiple hidden><p id="text-font-status" class="subtle" role="status">Loading your fonts…</p></div>
+      <label class="text-font-label">Font / style <select id="text-font" disabled title="Choose a bundled style or an imported font variant. Imported fonts are also available in Postcard text."></select></label>
+      <p id="text-font-note" class="subtle"></p>
       <div class="text-settings">
-        <label>Column spacing (mm) <input id="text-cell" type="number" min="0.5" max="40" step="0.1" value="3"></label>
-        <label>Row spacing (mm) <input id="text-row" type="number" min="0.5" max="60" step="0.1" value="5"></label>
+        <label>Letter sizing <select id="text-sizing" title="Fit to spacing keeps the original ASCII behaviour. Font size preserves the letter proportions at the chosen point size."><option value="fit">Fit to spacing</option><option value="points">Font size (points)</option></select></label>
+        <label>Font size (pt) <input id="text-size" type="number" min="6" max="72" step="0.5" value="12" disabled title="One point is 25.4/72 mm of the font's em square. Select Font size (points) to use this size."></label>
+      </div>
+      <label class="text-auto-label"><input id="text-auto-spacing" type="checkbox" checked disabled> Automatic spacing for this font size</label>
+      <div class="text-settings">
+        <label>Column spacing (mm) <input id="text-cell" type="number" min="0.5" max="40" step="0.01" value="3"></label>
+        <label>Row spacing (mm) <input id="text-row" type="number" min="0.5" max="60" step="0.01" value="5"></label>
         <label>Tab width (columns) <input id="text-tabs" type="number" min="1" max="16" step="1" value="8"></label>
       </div>
       <div class="text-paper"><svg id="text-preview" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" role="img" aria-label="Fixed-width text pen-path preview"></svg></div>
-      <p id="text-summary" role="status">Loading the stroke font…</p>
+      <p id="text-summary" role="status">Loading fonts…</p>
       <p id="text-error" class="error-message" role="alert"></p>
       <div class="postcard-actions"><button id="text-save" type="button" disabled>Save text</button><button id="text-export" type="button" disabled>Export SVG</button><button id="text-prepare" type="button" class="primary" disabled>Prepare to plot</button></div>
+      <details class="text-help"><summary>Fonts, styles and spacing</summary>
+      <p class="subtle">Choose Sans, Serif, Serif Italic or Script, or import a .ttf font. For another weight or style, import its own file, such as Bold or Italic. Each appears as a separate choice.</p>
+      <p class="subtle">Automatic spacing leaves room for accents and descenders. Untick it to set larger gaps yourself. Every character occupies one column, including when using a proportional font; lines never wrap.</p>
+      </details>
       <p id="text-plot-status" class="subtle" role="status"></p>
-      <p class="subtle">Spacing is the original size before fitting. Prepare to plot uses the page size and margin in Plot drawing and starts with Fit drawing to page. Review the fitted size, rotation and physical pen there. Choose Keep original size and position for the spacing shown above. Preparing does not move the plotter.</p>
+      <p class="subtle">Font size and spacing are measured before fitting. Prepare to plot uses the page size and margin in Plot drawing and starts with Fit drawing to page, which scales the lettering too. Review the fitted size, rotation and physical pen there. Choose Keep original size and position to retain the size shown above. Preparing does not move the plotter. Save text saves the characters only; Export SVG preserves the chosen letter paths and size.</p>
     </div>
   </div>
 </section>

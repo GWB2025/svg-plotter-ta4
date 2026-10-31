@@ -159,7 +159,12 @@ input[type=color] { width:54px; height:42px; padding:3px; border:1px solid #bdc9
 #text-content{display:block;box-sizing:border-box;width:100%;min-height:400px;resize:vertical;margin-top:8px;padding:12px;font:13px/1.35 Menlo,Consolas,monospace;white-space:pre;overflow:auto;tab-size:8;background:#fff;color:#203832;border:1px solid #c6d2c9;border-radius:8px}
 .text-settings{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}
 .text-settings label{display:grid;gap:5px;flex:1;min-width:130px}
-.text-settings input{width:100%;box-sizing:border-box}
+.text-settings input,.text-settings select,.text-font-label select{width:100%;min-width:0;box-sizing:border-box}
+.text-font-label{display:grid;gap:5px}
+.text-auto-label{display:flex;gap:8px;align-items:center}
+.text-font-import{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:10px 0}
+.text-font-import p{flex:1;min-width:160px;margin:0}
+.text-help{margin:12px 0}
 .text-paper{background:#fff;border:1px solid #c6d2c9;border-radius:8px;padding:12px}
 #text-preview{display:block;width:100%;height:430px}
 .text-review .postcard-actions{flex-wrap:wrap}

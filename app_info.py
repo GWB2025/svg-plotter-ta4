@@ -1,3 +1,3 @@
 """Version shared by the native window, application bundle and About panel."""
 
-VERSION = '1.7.0'
+VERSION = '1.8.0'

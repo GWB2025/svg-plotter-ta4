@@ -40,8 +40,8 @@
     finish();return paths;
   }
 
-  // Normalize to the postcard engine's Y-up font coordinates. At its largest
-  // supported size (40 pt), 0.5 unit is less than 0.008 mm.
+  // Normalize to Y-up font coordinates. At the largest text size (72 pt),
+  // 0.5 unit is less than 0.013 mm (under 0.008 mm at 40 pt for postcards).
   function convert(buffer,parser){
     const parsed=parse(buffer,parser),font=parsed.font,scale=1000/font.unitsPerEm;
     const map=font.tables?.cmap?.glyphIndexMap;
