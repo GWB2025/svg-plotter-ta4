@@ -59,6 +59,9 @@
       const card=node('fieldset',null,$('postcard-fields'));card.className='postcard-block';node('legend',title,card);
       const enabled=node('label',null,card);enabled.className='inline-check';const checkbox=node('input',null,enabled);checkbox.type='checkbox';checkbox.id='pc-'+key+'-enabled';node('span','Include '+(key==='message'?'message':'address'),enabled);help(checkbox,'Include this block when exporting and preparing to plot. Untick to plot only the other block.');
       const label=node('label',key==='message'?'Your message':'Postal address',card);label.className='postcard-text-label';const text=node('textarea',null,label);text.id='pc-'+key+'-text';text.rows=4;text.maxLength=key==='message'?2000:600;text.placeholder=key==='message'?'Type your message here…':'Recipient name\nHouse number and street\nTown or city\nPOSTCODE';help(text,'Enter text and line breaks. Words wrap within the text box; blank lines are retained.');
+      const actions=node('div',null,card);actions.className='text-edit-actions';
+      const clear=node('button','Clear text',actions);clear.type='button';clear.id='pc-'+key+'-clear';clear.setAttribute('aria-controls',text.id);
+      help(clear,'Clear only the '+(key==='message'?'message':'postal address')+' text. Font and layout settings are kept. Use Undo to restore it.');clear.onclick=()=>this.clearText(key);
       const settings=node('div',null,card);settings.className='postcard-settings';
       const fontLabel=node('label','Font',settings),font=node('select',null,fontLabel);font.id='pc-'+key+'-font';fontLabel.className='postcard-font';
       for(const item of this.fonts){const option=node('option',item.name+(item.kind==='outline'?' · outline':''),font);option.value=item.id;}help(font,'Choose a bundled stroke font or an imported outline font. The preview shows the actual pen paths.');
@@ -94,6 +97,12 @@
       $('postcard-draft-status').textContent=JSON.stringify(this.document)===this.lastSaved?'Draft matches the saved version.':'Unsaved changes — choose Save draft to keep this version.';
       clearTimeout(this.timer);this.result=null;this.valid=false;this.controls();this.timer=setTimeout(()=>this.render(),120);
     }
+    clearText(key){
+      if(!this.document||this.preparing)return;
+      const text=$('pc-'+key+'-text');if(!text.value)return;
+      this.document=this.read();this.remember();text.value='';
+      this.change();this.render();text.focus();
+    }
     restore(index){if(index<0||index>=this.history.length)return;this.index=index;this.document=JSON.parse(this.history[index]);this.write();$('postcard-draft-status').textContent='Layout restored. Save draft to keep this version.';this.render();}
     setPlotAvailability(allowed){this.allowed=allowed;this.controls();}
     controls(){
@@ -102,6 +111,7 @@
       $('postcard-prepare').disabled=!this.allowed||!this.result||!!this.result.errors.length||this.preparing;
       $('postcard-undo').disabled=this.index<1;$('postcard-redo').disabled=this.index>=this.history.length-1;
       $('postcard-reset').disabled=!this.document;
+      if(this.document)for(const key of ['message','address'])$('pc-'+key+'-clear').disabled=!$('pc-'+key+'-text').value||!!this.preparing;
       $('postcard-plot-status').textContent=this.allowed?'':'You can edit this draft while a drawing is active. Finish the drawing or resolve saved recovery before preparing another layout.';
     }
     render(){

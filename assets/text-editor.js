@@ -5,17 +5,23 @@
   class TextEditor {
     constructor() {
       this.name='text-drawing.txt'; this.allowed=false; this.working=false;
-      this.result=null; this.readId=0;this.fonts=[];
+      this.result=null; this.readId=0;this.fonts=[];this.cleared=null;
       this.ready=this.start();
       this.ready.catch(error => { $('text-error').textContent=error.message; });
       $('text-file').onchange=()=>this.readFile();
-      for(const id of ['text-content','text-cell','text-row','text-tabs','text-size']) $(id).oninput=()=>this.changed();
+      $('text-content').oninput=()=>{
+        if(this.cleared)$('text-source').textContent='New text · edit below or prepare the complete text.';
+        this.cleared=null;this.changed();
+      };
+      for(const id of ['text-cell','text-row','text-tabs','text-size']) $(id).oninput=()=>this.changed();
       for(const id of ['text-font','text-sizing','text-auto-spacing']) $(id).onchange=()=>this.changed();
       $('text-font-import').onclick=()=>$('text-font-files').click();
       $('text-font-files').onchange=()=>this.importFonts();
       $('text-save').onclick=()=>this.download($('text-content').value,this.name,'text/plain;charset=utf-8');
       $('text-export').onclick=()=>{this.render();if(this.result)this.download(root.TextImport.svg(this.result),this.stem()+'.svg','image/svg+xml');};
       $('text-prepare').onclick=()=>this.prepare();
+      $('text-clear').onclick=()=>this.clearText();
+      $('text-undo-clear').onclick=()=>this.undoClear();
     }
     async start() {
       const saved=await root.PlotterFonts.load();
@@ -50,6 +56,9 @@
       $('text-size').disabled=!points;$('text-auto-spacing').disabled=!points;
       $('text-cell').disabled=automatic;$('text-row').disabled=automatic;
       $('text-save').disabled=!$('text-content').value||this.working;
+      $('text-clear').disabled=!$('text-content').value||this.working;
+      $('text-undo-clear').hidden=!this.cleared;
+      $('text-undo-clear').disabled=!this.cleared||this.working;
       $('text-export').disabled=!this.result||this.working;
       $('text-prepare').disabled=!this.result||!this.allowed||this.working;
       $('text-plot-status').textContent=this.allowed?'':'Finish the current drawing or resolve saved recovery before preparing another drawing. You can still edit this text.';
@@ -59,9 +68,25 @@
       $('text-summary').textContent='Updating pen paths…';
       this.timer=setTimeout(()=>this.render(),120);
     }
-    async open(text,name='text-drawing.txt') {
+    clearText() {
+      const input=$('text-content');if(this.working||!input.value)return;
+      this.cleared={text:input.value,name:this.name,source:$('text-source').textContent};
+      ++this.readId;$('text-file').value='';input.value='';this.name='text-drawing.txt';
+      $('text-source').textContent='Text cleared. Use Undo clear to restore it, or enter new text.';
+      this.render();input.focus();
+    }
+    undoClear() {
+      if(this.working||!this.cleared)return;
+      ++this.readId;$('text-file').value='';
+      $('text-content').value=this.cleared.text;this.name=this.cleared.name;
+      $('text-source').textContent=this.cleared.source;this.cleared=null;
+      this.render();$('text-content').focus();
+    }
+    async open(text,name='text-drawing.txt',readId=null) {
       await this.ready;
+      if(readId!==null&&readId!==this.readId)return;
       if(text.length>50000) throw Error('Text is too long: the limit is 50,000 characters.');
+      this.cleared=null;
       this.name=name.replace(/^.*[\\/]/,'').replace(/\.[^.]+$/, '')+'.txt';
       $('text-content').value=text.replace(/^\ufeff/,'').replace(/\r\n?/g,'\n');
       $('text-source').textContent=this.name+' · edit below or prepare the complete file.';
@@ -73,8 +98,8 @@
       try {
         if(file.size>2*1024*1024) throw Error('The text file is too large. Choose a file under 2 MB.');
         const text=root.TextImport.decode(await file.arrayBuffer());
-        if(id===this.readId) await this.open(text,file.name);
-      } catch(error) { $('text-error').textContent=error.message; }
+        if(id===this.readId) await this.open(text,file.name,id);
+      } catch(error) { if(id===this.readId)$('text-error').textContent=error.message; }
       finally { if(id===this.readId)$('text-file').value=''; }
     }
     render() {

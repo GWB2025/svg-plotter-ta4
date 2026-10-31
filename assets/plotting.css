@@ -52,6 +52,8 @@
 .postcard-actions, .postcard-history { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
 .postcard-history button { font-size:13px; padding:7px 10px; }
 .postcard-actions button { padding:10px 13px; }
+.text-edit-actions { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
+.text-edit-actions button { padding:8px 12px; }
 #postcard-errors { padding-left:20px; font-size:14px; }
 #postcard-errors li { margin:7px 0; }
 #postcard-draft-status { font-size:13px; color:#245d49; }

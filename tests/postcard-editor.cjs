@@ -13,6 +13,7 @@ async function fixture() {
     replaceChildren(...items){this.children=items;}
     setAttribute(key,value){this[key]=value;}
     addEventListener(){}
+    focus(){this.focused=true;}
     querySelectorAll(){return this.children.flatMap(child=>[child,...child.querySelectorAll()]).filter(c=>['input','textarea','select'].includes(c.tag));}
   }
   for(const match of fs.readFileSync('docs/postcard-panel.html','utf8').matchAll(/id="([^"]+)"/g))elements.set(match[1],new Element());
@@ -47,4 +48,39 @@ test('postcard imports use the shared font service and retain a draft when impor
   get('postcard-font-files').files=[{name:'bad.ttf'}];library.importFiles=async()=>{throw Error('Invalid font');};
   await editor.importFonts();assert.match(get('postcard-font-status').textContent,/Invalid font/);
   assert.equal(JSON.stringify(editor.document),before);assert.equal(get('postcard-font-import').disabled,false);
+});
+
+test('each postcard Clear text button preserves the other block and supports Undo and Redo',async()=>{
+  const {get,editor}=await fixture();
+  get('pc-message-text').value='Rōmānī īte domum';get('pc-address-text').value='Brian\nRome';
+  get('pc-message-font').value='italic';get('pc-address-size').value='14';
+  editor.change();editor.render();const before=JSON.parse(JSON.stringify(editor.document));
+  const saved=editor.lastSaved;
+  for(const key of ['message','address']){
+    const other=key==='message'?'address':'message';
+    const button=get('pc-'+key+'-clear');assert.equal(button.textContent,'Clear text');
+    assert.equal(button.disabled,false);button.onclick();
+    assert.equal(editor.document[key].text,'');assert.equal(get('pc-'+key+'-text').focused,true);
+    assert.deepEqual(editor.document[other],before[other]);
+    assert.deepEqual({...editor.document[key],text:before[key].text},before[key]);
+    assert.equal(editor.result.blocks[key].paths.length,0);assert.equal(button.disabled,true);
+    assert.match(get('postcard-draft-status').textContent,/Unsaved/);assert.equal(editor.lastSaved,saved);
+    const count=editor.history.length;button.onclick();assert.equal(editor.history.length,count);
+    get('postcard-undo').onclick();assert.equal(JSON.stringify(editor.document),JSON.stringify(before));
+    get('postcard-redo').onclick();assert.equal(editor.document[key].text,'');
+    get('postcard-undo').onclick();
+  }
+});
+
+test('clearing both postcard blocks cannot prepare an empty drawing or change a prepared copy',async()=>{
+  const {get,editor}=await fixture();
+  get('pc-message-text').value='Message';get('pc-address-text').value='Address';editor.change();editor.render();
+  const prepared=structuredClone(editor.result),paths=JSON.stringify(prepared.paths);
+  editor.preparing=true;editor.controls();assert.equal(get('pc-message-clear').disabled,true);
+  get('pc-message-clear').onclick();assert.equal(editor.document.message.text,'Message');
+  editor.preparing=false;editor.setPlotAvailability(false);
+  get('pc-message-clear').onclick();get('pc-address-clear').onclick();
+  assert.equal(editor.document.message.text,'');assert.equal(editor.document.address.text,'');
+  assert.equal(get('postcard-prepare').disabled,true);assert.equal(get('postcard-export').disabled,true);
+  assert.equal(JSON.stringify(prepared.paths),paths);
 });

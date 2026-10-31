@@ -6,6 +6,7 @@
       <p id="text-source" class="subtle" role="status">Choose a .txt file, or paste text below.</p>
       <label for="text-content">Text to plot</label>
       <textarea id="text-content" rows="24" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="50000" aria-describedby="text-edit-help" placeholder="Paste your ASCII art or text here…"></textarea>
+      <div class="text-edit-actions"><button id="text-clear" type="button" aria-controls="text-content" disabled title="Clear the text and its preview. Font and spacing settings are kept; Undo clear can restore the text.">Clear text</button><button id="text-undo-clear" type="button" aria-controls="text-content" hidden disabled title="Restore the last cleared text. Available until you type or open another file.">Undo clear</button></div>
       <p id="text-edit-help" class="subtle">Lines never wrap. Leading spaces, blank lines and any signature or website footer are retained. You can edit the text before plotting; Save text keeps your edits as a .txt file.</p>
     </div>
     <div class="text-review">

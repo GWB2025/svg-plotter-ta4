@@ -123,6 +123,11 @@ its original size without fonts. **Save G-code** in Plot drawing saves the fitte
 checked commands and assigned pen. Editing text after preparation does not
 change the loaded drawing until you prepare it again.
 
+Since version 1.8.1, **Clear text** below the editor empties the text and preview
+while retaining the chosen font, size and spacing. **Undo clear** restores the
+text until you type or open another file. Clearing does not change a drawing
+already prepared in Plot drawing or delete the original text file.
+
 Plain text supports UTF-8 and BOM-marked UTF-16, Windows/Mac/Unix line endings,
 and the characters available in the selected font. Combining Latin accents
 are normalised so, for example, ō and o followed by a combining macron use one
@@ -545,6 +550,10 @@ Each block has its own controls:
 Changes update the preview without loading or moving the plotter. Use **Undo**
 and **Redo** to compare recent edits. **Reset positions** restores the starting
 X, Y and widths while retaining text, fonts, sizes, spacing and alignment.
+Since version 1.8.1, each text field has its own **Clear text** button: clear the
+message or postal address independently, keeping its settings and the other
+field. **Undo** restores cleared text; **Redo** clears it again. Choose **Save
+draft** if you want the cleared version retained after reopening.
 **Show layout guides** displays non-plotting box boundaries and a centre guide.
 **Draw centre divider line** explicitly adds a single plotted line at X74 mm.
 

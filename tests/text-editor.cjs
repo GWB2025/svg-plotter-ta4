@@ -9,11 +9,13 @@ class Element {
   replaceChildren(...children){this.children=children;}
   setAttribute(key,value){this[key]=value;}
   click(){}
+  focus(){this.focused=true;}
 }
 async function fixture({broken=false}={}) {
   const html=fs.readFileSync('docs/text-panel.html','utf8');
   const elements=new Map([...html.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],new Element()]));
   const get=id=>{assert.ok(elements.has(id),'Missing '+id);return elements.get(id);};
+  elements.set('text-tab',new Element());
   for(const [id,value] of Object.entries({'text-cell':'3','text-row':'5','text-tabs':'8','text-size':'12','text-sizing':'fit'}))get(id).value=value;
   get('text-auto-spacing').checked=true;
   const imported={...bundled[1],id:'ttf-existing',name:'Imported Serif Bold',kind:'outline'};
@@ -70,4 +72,40 @@ test('a saved font error leaves the built-in text fonts available',async()=>{
   const {get,editor}=await fixture({broken:true});
   assert.match(get('text-font-status').textContent,/damaged/);
   get('text-content').value='Hello';editor.render();assert.ok(editor.result);
+});
+
+test('Clear text empties the ASCII preview, preserves settings and can be undone',async()=>{
+  const {get,editor,prepared}=await fixture();
+  await editor.open('  Rōmānī\n  īte domum','latin.txt');
+  get('text-font').value='ttf-existing';get('text-cell').value='4';editor.render();
+  editor.setPlotAvailability(true);await editor.prepare();
+  const paths=prepared[0].paths,source=get('text-source').textContent;
+  assert.equal(get('text-clear').disabled,false);
+  get('text-clear').onclick();
+  assert.equal(get('text-content').value,'');assert.equal(editor.result,null);
+  assert.equal(get('text-preview').children.length,0);
+  assert.equal(get('text-clear').disabled,true);assert.equal(get('text-save').disabled,true);
+  assert.equal(get('text-export').disabled,true);assert.equal(get('text-prepare').disabled,true);
+  assert.equal(get('text-font').value,'ttf-existing');assert.equal(get('text-cell').value,'4');
+  assert.equal(get('text-content').focused,true);assert.equal(get('text-undo-clear').hidden,false);
+  assert.deepEqual(prepared[0].paths,paths);assert.equal(prepared.length,1);
+  get('text-undo-clear').onclick();
+  assert.equal(get('text-content').value,'  Rōmānī\n  īte domum');
+  assert.equal(editor.name,'latin.txt');assert.equal(get('text-source').textContent,source);
+  assert.deepEqual(editor.result.paths,paths);assert.equal(get('text-undo-clear').hidden,true);
+  get('text-clear').onclick();get('text-content').value='Replacement';get('text-content').oninput();
+  assert.equal(get('text-undo-clear').hidden,true);assert.match(get('text-source').textContent,/New text/);
+});
+
+test('clearing ASCII text cancels an unfinished file read and respects preparation',async()=>{
+  const {get,editor}=await fixture();get('text-content').value='Existing text';editor.render();
+  let finish;get('text-file').files=[{name:'late.txt',size:4,arrayBuffer:()=>new Promise(resolve=>{finish=resolve;})}];
+  const reading=editor.readFile();get('text-clear').onclick();
+  finish(Uint8Array.from(Buffer.from('Late')).buffer);await reading;
+  assert.equal(get('text-content').value,'');assert.equal(editor.result,null);
+  get('text-undo-clear').onclick();assert.equal(get('text-content').value,'Existing text');
+  editor.working=true;editor.controls();assert.equal(get('text-clear').disabled,true);
+  get('text-clear').onclick();assert.equal(get('text-content').value,'Existing text');
+  editor.working=false;editor.setPlotAvailability(false);get('text-clear').onclick();
+  assert.equal(get('text-content').value,'');assert.equal(get('text-prepare').disabled,true);
 });

@@ -1,4 +1,4 @@
-SVG Plotter 1.8.0 — pre-release
+SVG Plotter 1.8.1 — pre-release
 
 INSTALL OR UPDATE
 
@@ -8,7 +8,7 @@ INSTALL OR UPDATE
    Continue and Install. Enter your administrator password if requested.
    For an application ZIP or DMG: copy SVG Plotter.app into Applications.
    Eject a DMG after copying. GitHub's source ZIP is not an application bundle.
-3. Open Finder > Applications > SVG Plotter. Confirm version 1.8.0 in About.
+3. Open Finder > Applications > SVG Plotter. Confirm version 1.8.1 in About.
 4. Choose Your plotter before connecting. Keep the supplied Writing Robot T-A4
    profile for the original machine, refresh connections and select its USB port.
 5. Clear the bed and homing path, choose Home, then secure scrap paper and fit
@@ -25,6 +25,15 @@ installer is not for Intel Macs. The app is ad-hoc signed and the installer is
 unsigned; neither is Apple-notarised. If macOS blocks a trusted download, try
 opening it, then use System Settings > Privacy & Security > Open Anyway.
 Apple guidance: https://support.apple.com/en-gb/102445
+
+VERSION 1.8.1
+
+Clear text buttons are available below the ASCII editor, postcard message and
+postal address. Each clears only its own text and keeps font/layout settings.
+Use Undo in Postcard text or Undo clear in ASCII to restore cleared text.
+ASCII Undo clear remains available until you type or open another file.
+Clearing does not alter an already prepared drawing or erase saved files.
+Save draft if you want to keep the cleared postcard for the next session.
 
 VERSION 1.8.0
 
