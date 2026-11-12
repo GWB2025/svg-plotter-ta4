@@ -40,12 +40,12 @@
       await this.load();
       if(!files.length||files.length>20) throw Error('Choose between 1 and 20 fonts at a time.');
       for(const file of files)
-        if(!/\.ttf$/i.test(file.name)||file.size>this.converter.MAX_BYTES)
-          throw Error('Choose .ttf files no larger than 2 MB each.');
+        if(!/\.(ttf|svg)$/i.test(file.name)||file.size>this.converter.MAX_BYTES)
+          throw Error('Choose .ttf or single-line .svg font files no larger than 2 MB each.');
       const records=[];
       for(const file of files) {
         const buffer=await file.arrayBuffer();
-        records.push({original_base64:this.converter.base64(buffer),font:this.converter.convert(buffer,this.parser)});
+        records.push({original_base64:this.converter.base64(buffer),...(/\.svg$/i.test(file.name)?{format:'svg'}:{font:this.converter.convert(buffer,this.parser)})});
       }
       const saved=await this.request({fonts:records});
       this.fonts=[...this.bundled,...saved.fonts];
