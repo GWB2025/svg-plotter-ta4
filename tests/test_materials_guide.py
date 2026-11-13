@@ -1,4 +1,4 @@
-"""The supplied reference is complete, attributed and read-only."""
+"""The supplied reference is complete and read-only."""
 
 import json
 import tempfile
@@ -14,7 +14,7 @@ class MaterialsGuideTests(unittest.TestCase):
     def setUp(self):
         self.guide = MaterialsGuide(ROOT / 'assets/materials-guide.json')
 
-    def test_reference_retains_all_rows_fields_and_timestamps(self):
+    def test_reference_retains_all_rows_and_material_fields(self):
         entries = self.guide.entries
         self.assertEqual(len(entries), 16)
         self.assertEqual(entries[0]['name'], 'Sakura Pigma Micron')
@@ -26,18 +26,12 @@ class MaterialsGuideTests(unittest.TestCase):
         for entry in entries:
             self.assertEqual(set(entry), {
                 'name', 'category', 'material', 'compatibility',
-                'lightfastness', 'notes', 'timestamp', 'source',
+                'lightfastness', 'notes',
             })
-            self.assertRegex(entry['timestamp'], r'^\d{2}:[0-5]\d$')
-            self.assertEqual(entry['source'], '1')
             self.assertTrue(all(entry.values()))
 
-    def test_html_credits_dan_and_escapes_document_content(self):
+    def test_html_escapes_document_content(self):
         html = self.guide.render()
-        self.assertIn('Dan Catt', html)
-        self.assertIn('1.3.0 - Pens &amp; Paper | Drawing Machines 101', html)
-        self.assertIn('t=120s', html)
-        self.assertIn('t=1350s', html)
         self.assertIn('Not in source', html)
         self.assertIn('not T-A4 compatibility tests', html)
         with tempfile.TemporaryDirectory() as folder:

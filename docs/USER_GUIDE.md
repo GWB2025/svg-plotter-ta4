@@ -324,7 +324,7 @@ manual browser testing. See [1.7.0 validation](VALIDATION_1.7.0.md),
 interactive and physical checks are outstanding.
 
 Sender code is reused under the included MIT licence from Gordon Brindle's
-Handwriting Studio. The original installation and Dan's course repository remain
+Handwriting Studio. The original installation remains
 unchanged.
 
 ## Built-in test drawings
@@ -700,26 +700,13 @@ Importing and previewing never connects to or moves the plotter. **Save draft** 
 
 Open **Materials guide** to browse the supplied *Pen Plotter Pens, Inks, and
 Papers Comparison*. All 16 entries retain their original material/nib notes,
-paper pairings, lightfastness statements, practical considerations and video
-timestamps. Search matches every word you enter, across each card; combine it
+paper pairings, lightfastness statements, practical considerations. Search matches every word you enter, across each card; combine it
 with Category to show only pens, papers, pencils or engraving tools. Use
 **Clear filters** to restore the complete list.
 
-With thanks to **Dan Catt** for [1.3.0 - Pens & Paper | Drawing Machines
-101](https://www.youtube.com/watch?v=8bsWp6pKeYk). His [course and supporting
-resources](https://penplotter.com/) are linked in the guide. Each card's video
-link opens at the timestamp recorded in the supplied document. These notes are
-not independent product verification or T-A4 compatibility tests; unreported
-properties remain marked **Not in source**. The comparison's wording is retained,
-including its terminology for nib and ink types.
+These notes are not independent product verification or T-A4 compatibility tests; unreported properties remain marked **Not in source**.
 
-The guide is bundled with the app and readable offline. Video links need an
-internet connection. Browsing and filtering do not add items to your personal
-stock, alter ink readings, change a drawing or issue plotter commands. The
-comparison was supplied by Gordon Brindle on 27 October 2026; its underlying
-lesson is credited to Dan Catt in the guide and About. This attribution does not
-claim Dan's endorsement of the app or relicense his material under the app's MIT
-licence. The linked source document was left unchanged.
+The guide is bundled with the app and readable offline. Browsing and filtering do not change your personal stock, drawing or plotter state.
 
 
 ## Ink stock (version 1.5.0)
@@ -735,10 +722,7 @@ reading from a dry swatch or an approximate colour. The paper and fill density
 affect the result. The app does not connect to the ColorReader directly.
 
 Your ink stock starts empty; adding a bottle never claims you own other inks.
-Any brand can be recorded, including products you discover in Dan Catt’s linked
-Pens & Paper lesson. The supplied comparison does not name separate bottled
-products, so no product list is attributed to that video without verification.
-Dan remains credited in the Ink stock panel, Materials guide and About.
+Any brand can be recorded. Add products and observations from your own testing.
 
 In **Pen stock**, edit a refillable pen and select its **Bottled ink**. This
 records the current fill and adds the ink’s name to future pen assignments and

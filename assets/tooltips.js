@@ -9,7 +9,7 @@
   'pen-bottle':'Record the bottled ink currently in this pen. This does not change the pen’s RGB reading.',
   'pen-copy-ink':'Copy the selected bottle’s colour into this pen’s colour fields. Save the pen to keep it.',
   'stock-tab':'Add and edit your pens, change availability, and back up pens, inks and themes.',
-  'materials-tab':'Browse the supplied pens, inks and papers comparison, with credit to Dan Catt and links to his lesson.',
+  'materials-tab':'Browse the supplied pens, inks and papers comparison.',
   'materials-search':'Search item names, nib types, pairings, ink properties and notes. All search words must match.',
   'materials-category':'Show pens, papers, pencils or engraving tools from the reference.',
   'materials-clear':'Show all comparison entries again.',
