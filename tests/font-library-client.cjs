@@ -48,3 +48,11 @@ test('a broken saved library leaves bundled fonts usable and rejects imports wit
   const result=await client.load();assert.equal(result.fonts[0].id,'sans');assert.match(result.error,/damaged/);
   await assert.rejects(()=>client.importFiles([file()]),/damaged/);assert.equal(updates,0);
 });
+
+test('SVG font bytes go to server without TrueType conversion',async()=>{
+  const {client,calls}=fixture();client.converter.convert=()=>{throw Error('Wrong converter');};
+  await client.importFiles([{...file(),name:'Writer.svg'}]);
+  const record=JSON.parse(calls.find(c=>c.options.method==='POST').options.body).fonts[0];
+  assert.equal(record.format,'svg');assert.equal(record.original_base64,'encoded');
+  assert.equal(record.font,undefined);
+});

@@ -316,3 +316,14 @@ This mode supports opaque solid fills and strokes, transformed groups and
 compound paths with holes. Transparency and blending are rejected; gradients,
 clipping, masks, linked content and SVG text still need conversion in an editor.
 Colour changes use the existing pen-up home and confirmation workflow.
+
+### Import a handwriting SVG font
+
+In **Text & ASCII art** or **Postcard text**, choose **Import fonts…** and select
+an SVG font exported by Handwriting Studio. Select its Writer name in the Font
+menu, then type your text. Fonts stay on this Mac and are shared by both panes.
+Open pen strokes, pen lifts, advances and baseline/descender positions are retained.
+The importer accepts SVG 1.1 fonts with M/L/Z polyline paths (absolute or relative),
+not ordinary SVG drawings or curved outline fonts; unsupported paths produce an
+error without changing your library. Maximum 2 MB per font, 20 imported fonts.
+Use Postcard text for proportional spacing; Text & ASCII art retains fixed columns.

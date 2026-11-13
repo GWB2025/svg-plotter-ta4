@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import tempfile
 import threading
+from svg_font import convert as convert_svg_font
 
 
 class FontLibrary:
@@ -28,7 +29,12 @@ class FontLibrary:
             raw = base64.b64decode(encoded, validate=True)
         except (ValueError, binascii.Error):
             raise ValueError('The original font could not be read.') from None
-        if not 12 <= len(raw) <= self.MAX_FONT_BYTES or raw[:4] not in (b'\x00\x01\x00\x00', b'true'):
+        is_svg = record.get('format') == 'svg'
+        if not 12 <= len(raw) <= self.MAX_FONT_BYTES:
+            raise ValueError('Choose a font no larger than 2 MB.')
+        if is_svg:
+            font = convert_svg_font(raw)
+        elif raw[:4] not in (b'\x00\x01\x00\x00', b'true'):
             raise ValueError('Choose a .ttf TrueType font.')
         if not isinstance(font, dict) or font.get('units') != 1000:
             raise ValueError('Invalid font dimensions.')
@@ -56,7 +62,7 @@ class FontLibrary:
             left = top = float('inf')
             right = bottom = -float('inf')
             for path in paths:
-                if not isinstance(path, list) or not 2 <= len(path) <= 10000 or path[0] != path[-1]:
+                if not isinstance(path, list) or not 2 <= len(path) <= 10000 or (not is_svg and path[0] != path[-1]):
                     raise ValueError('Font outlines must be closed contours.')
                 count += len(path)
                 if count > 200000:
@@ -69,10 +75,10 @@ class FontLibrary:
                     right, bottom = max(right, x), max(bottom, y)
             checked[character] = dict(advance=advance, paths=paths,
                                       bounds=None if left == float('inf') else [left, top, right, bottom])
-        identifier = 'ttf-' + hashlib.sha256(raw).hexdigest()
-        return dict(id=identifier, original_base64=encoded,
+        identifier = ('svg-' if is_svg else 'ttf-') + hashlib.sha256(raw).hexdigest()
+        return dict(id=identifier, original_base64=encoded, format='svg' if is_svg else 'ttf',
                     font=dict(id=identifier, name=name.strip(), credit=credit,
-                              kind='outline', units=1000, cap_height=cap, glyphs=checked))
+                              kind='stroke' if is_svg else 'outline', units=1000, cap_height=cap, glyphs=checked))
 
     def read(self):
         if not self.path.exists():
