@@ -351,7 +351,6 @@ Source contains the installer builder and tests; these are optional.
 The app is unchanged. See VALIDATION.json for payload and smoke checks.
 These checks do not install the app or test physical plotting.
 App source and attribution: https://github.com/GWB2025/svg-plotter-ta4
-Inspired by Dan Catt's pen-plotting design; attribution remains inside the app.
 
 Rebuild on a development Mac with Apple's command-line tools:
   python3 Source/packaging/build_installer.py \\

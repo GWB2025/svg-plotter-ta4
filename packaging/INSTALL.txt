@@ -92,4 +92,3 @@ Physical trial: https://github.com/GWB2025/svg-plotter-ta4/blob/main/docs/PHYSIC
 
 As of 29 October 2026, no GitHub Releases have been published. The current Mac
 builds were supplied separately; see the repository README for distribution status.
-Inspired by Rev Dan Catt's pen-plotting workflow; credits and licences are in About.

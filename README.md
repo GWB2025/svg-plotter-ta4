@@ -48,9 +48,7 @@ Existing catalogues and backups are supported. See [ink stock](docs/USER_GUIDE.m
 
 Version 1.4.1 adds a searchable **Materials guide** with all 16 entries from the
 supplied *Pen Plotter Pens, Inks, and Papers Comparison*. It retains the paper
-pairings, ink notes, missing-information labels and timestamps, with prominent
-credit to **Dan Catt** and links to his [Pens & Paper lesson](https://www.youtube.com/watch?v=8bsWp6pKeYk)
-and [course](https://penplotter.com/). The guide works offline and does not change
+pairings, ink notes and missing-information labels. The guide works offline and does not change
 your stock or drawing. See [materials guide](docs/USER_GUIDE.md#materials-guide-version-141).
 
 Version 1.4.0 adds **Pen colour swatches** in Pen stock: labelled A4 sheets for
@@ -160,7 +158,7 @@ Opening the app does not connect to USB or start movement. Select the device, co
 - Exact-size stock positioning guides and labelled pen colour swatch sheets.
 - Postcard message/address layout and private TrueType font import.
 - Text-file and ASCII-art plotting with bundled/imported fonts, point sizes and fixed columns.
-- An offline Materials guide credited to Dan Catt.
+- An offline Materials guide.
 - Optional visible-layer hatching and responsive pen-path previews.
 - Built-in test drawings and pause, continue and cancel controls.
 
@@ -168,11 +166,9 @@ Outline mode follows SVG paths; Layered colour fills creates hatching for suppor
 
 ## Acknowledgements
 
-This independent project is inspired by **Rev Dan Catt** and his explanations of pen plotting, handwriting capture and creative tools. Our design reference is [Dan’s YouTube video](https://youtu.be/nD3XlqFhcEI). Thank you, Dan, for sharing your process and ideas.
-
 Nine supplied theme references credit **Studio Yorktown**: [Color Town Hall](https://studioyorktown.github.io/coloryorktownhall/). Six further combinations use the Sharpie Glam Pop collection. Physical pen mappings and screen swatches are approximations, not exact ink matches.
 
-This is Gordon’s independent implementation and is not an official product of, or endorsed by, Dan or Studio Yorktown. Dan’s videos, transcripts, screenshots and postcard artwork are not included in this repository. Acknowledgement does not grant a licence to third-party material.
+This is Gordon’s independent implementation and is not an official product of, or endorsed by, Studio Yorktown. The app licence does not relicense third-party material.
 
 ## AI assistance
 
